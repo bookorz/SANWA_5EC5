@@ -17,10 +17,6 @@ SVNR:'S1F11' W
 .
 SVNRR:'S1F12' 
 .
-CR_Host:'S1F13' W
-    <L[0]
-    >
-.
 CR:'S1F13' W
     <L[2]
         <A[1] 'MDLN'>
@@ -151,6 +147,18 @@ DTA:'S2F32'
 .
 DTA_Nak:'S2F32' 
     <B[1] 1>
+.
+DR:'S2F33' W
+.
+DRA:'S2F34' 
+.
+LER:'S2F35' W
+.
+LERA:'S2F36' 
+.
+EDER:'S2F37' W 
+.
+EERA:'S2F38'
 .
 DMBI:'S2F39' W
     <L[2]
@@ -403,6 +411,9 @@ CA:'S2F50'
         >
     >
 .
+ABT_S3:'S3F0'
+	<B[10] 0x0 0x0 0x83 0x11 0x0 0x0 0x71 0x11 0x86 0xAC>
+.
 MSR:'S3F1' W
 .
 MSD:'S3F2' 
@@ -417,35 +428,13 @@ MSD:'S3F2'
         >
     >
 .
-CancelCarrier:'S3F17' W
-    <L[5]
-        <U4[1] 0>
-        <A[1] 'CancelCarrier'>
-        <A[1] 'ASR12272'>
-        <B[1] 1>
-        <L[0]
-        >
-    >
+CAR:'S3F17' W
 .
-CancelCarrierAtPort:'S3F17' W
-    <L[5]
-        <U4[1] 0>
-        <A[1] 'CancelCarrierAtPort'>
-        <A[1] ''>
-        <B[1] 1>
-        <L[0]
-        >
-    >
+CAA:'S3F18'
 .
-ProceedWithCarrier:'S3F17' W
-    <L[5]
-        <U4[1] 1>
-        <A[1] 'ProceedWithCarrier'>
-        <A[1] 'ASR10192'>
-        <B[1] 1>
-        <L[0]
-        >
-    >
+PortGroupDefinition:'S3F21' W
+.
+PortGroupDefinitionAcknowledge:'S3F22'  
 .
 ChangeAccessMode:'S3F23' W
     <L[3]
@@ -458,6 +447,22 @@ ChangeAccessMode:'S3F23' W
             >
         >
     >
+.
+Port Action Request:'S3F25' W
+.
+PortActionAcknowledge :'S3F26'  
+.
+Change Access:'S3F27' W
+.
+Change Access Acknowledge:'S3F28'
+.
+CTTR:'S3F29' W
+.
+CTRD:'S3F30' W
+.
+CTWDR:'S3F31' W
+.
+CTWDA:'S3F32' W
 .
 CSR:'S3F81' W
 .
