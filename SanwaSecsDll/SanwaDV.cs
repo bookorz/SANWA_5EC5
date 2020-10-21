@@ -15,7 +15,7 @@ namespace SanwaSecsDll
         public object _value;
     }
 
-    static class DVName
+    public static class DVName
     {
         public const string GEM_DV_PP_CHANGE_NAME = "GEM_DV_PP_CHANGE_NAME";
         public const string GEM_DV_PP_CHANGE_STATUS = "GEM_DV_PP_CHANGE_STATUS";

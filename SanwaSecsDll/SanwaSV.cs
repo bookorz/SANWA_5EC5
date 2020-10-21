@@ -14,7 +14,7 @@ namespace SanwaSecsDll
         public string _sVName;
     }
 
-    static class SVName
+    public static class SVName
     {
         public const string LICENSE_CODE_SVID = "LICENSE_CODE_SVID";
         public const string LICENSE_STATUS_SVID = "LICENSE_STATUS_SVID";

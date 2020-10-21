@@ -6,6 +6,9 @@ namespace SanwaSecsDll
 {
     public static class SanwaACK
     {
+        public const byte COMMACK_ACK = 0x00;
+        public const byte COMMACK_DENIED = 0x01;
+
         //Receive/Reply by S1F15/16
         public const byte OFLACK_ACK = 0x00;
 

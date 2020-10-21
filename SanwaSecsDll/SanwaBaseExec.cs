@@ -48,12 +48,14 @@ namespace SanwaSecsDll
 
         public SecsGem _secsGem;
 
+        public SanwaSMLManager _smlManager;
+
         //提供Interface給外部紀錄Log
         public ISecsGemLogger _logger;
 
         public CONTROL_STATE _currentState { get; set; }
 
-        public SecsMessageList _secsMessages;
+        //public SecsMessageList _secsMessages;
         public Dictionary<string, SanwaSV> _svList;     //search by Name
         public Dictionary<string, SanwaSV> _svIDList;   //search by ID       
         public Dictionary<string, SanwaEC> _ecList;     //search by Name     
@@ -72,12 +74,16 @@ namespace SanwaSecsDll
         public Dictionary<string, LoadPort> _loadPortList;
         public Dictionary<string, LoadPortGroup> _loadPortGroupList;
 
+        public Dictionary<string, SanwaStrFunSetting> _strFunList;
+
 
         private string _svFolderName;
+        private string _ecFolderName;
+        private string _dvFolderName;
 
-        public SanwaBaseExec(SecsMessageList secsMessages)
+        public SanwaBaseExec()
         {
-            _secsMessages = secsMessages;
+            //_secsMessages = secsMessages;
 
             _mdln = "TestMDLN";
             _softRev = "Test_SOFTREV";
@@ -90,7 +96,9 @@ namespace SanwaSecsDll
 
             string EnvironmentDirectory = Environment.CurrentDirectory;
 
-            _svFolderName = EnvironmentDirectory + "SVFolder\\";
+            _svFolderName = EnvironmentDirectory + "\\Data_SV\\";
+            _ecFolderName = EnvironmentDirectory + "\\Data_EC\\";
+            _dvFolderName = EnvironmentDirectory + "\\Data_DV\\";
         }
         public void Initialize()
         {
@@ -174,7 +182,7 @@ namespace SanwaSecsDll
 
                 if (obj._format != SecsFormat.List)
                 {
-                    StreamWriter sw = new StreamWriter(_svFolderName + obj._id.ToString());
+                    StreamWriter sw = new StreamWriter(_svFolderName + obj._id.ToString()+ ".txt");
 
                     if (obj._format == SecsFormat.ASCII || obj._format == SecsFormat.JIS8)
                     {
@@ -210,17 +218,20 @@ namespace SanwaSecsDll
         }
         private void RecursionWriteSVListToFile(string foldername, Dictionary<string, SanwaSV> SVList)
         {
-            if (!Directory.Exists(foldername))
+            if (Directory.Exists(foldername))
             {
-                Directory.CreateDirectory(foldername);
+                DelectDir(foldername);
+                //Directory.(foldername);
             }
 
-            foreach(object SVobject in SVList.Values)
+            Directory.CreateDirectory(foldername);
+
+            foreach (object SVobject in SVList.Values)
             {
                 SanwaSV sanwaSV = (SanwaSV)SVobject;
                 if (sanwaSV._format != SecsFormat.List)
                 {
-                    StreamWriter sw = new StreamWriter(foldername + sanwaSV._id.ToString());
+                    StreamWriter sw = new StreamWriter(foldername + sanwaSV._id.ToString()+ ".txt");
 
                     if (sanwaSV._format == SecsFormat.ASCII || sanwaSV._format == SecsFormat.JIS8)
                     {
@@ -251,22 +262,484 @@ namespace SanwaSecsDll
                 }
             }
         }
-        public void GetSVData(string id, out SanwaSV SVData)
+        private void DelectDir(string srcPath)
         {
-            _svList.TryGetValue(id, out SanwaSV obj);
+            try
+            {
+                DirectoryInfo dir = new DirectoryInfo(srcPath);
+                FileSystemInfo[] fileinfo = dir.GetFileSystemInfos();  //返回目录中所有文件和子目录
+                foreach (FileSystemInfo i in fileinfo)
+                {
+                    if (i is DirectoryInfo)            //判断是否文件夹
+                    {
+                        DirectoryInfo subdir = new DirectoryInfo(i.FullName);
+                        subdir.Delete(true);          //删除子目录和文件
+                    }
+                    else
+                    {
+                        File.Delete(i.FullName);      //删除指定文件
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                throw;
+            }
+        }
+        public void GetSVData(string name, out SanwaSV SVData)
+        {
+            _svList.TryGetValue(name, out SanwaSV obj);
             SVData = obj;
+        }
+        public SanwaEC SetECByID(string id, object value)
+        {
+            _ecIDList.TryGetValue(id,out SanwaEC sanwaEC);
+
+            SetEC(sanwaEC._name, value);
+
+            return sanwaEC;
+
+        }
+        public SanwaEC SetEC(string name, object value)
+        {
+            GetECData(name, out SanwaEC obj);
+            bool ecChanged = false;
+            if (obj != null && value != null)
+            {
+                if(obj._value != null)
+                    SetDV(DVName.GEM_PREVIOUS_EC_VALUE, obj._value);
+
+                switch (obj._type)
+                {
+                    case SecsFormat.ASCII:
+                        obj._value = value.ToString();
+                        ecChanged = true;
+                        break;
+                    case SecsFormat.Boolean:
+                        obj._value = Convert.ToBoolean(value);
+                        ecChanged = true;
+                        break;
+                    case SecsFormat.Binary:
+                        var enumerable = value as IEnumerable<byte>;
+                        obj._value = enumerable;
+                        ecChanged = true;
+                        break;
+                    case SecsFormat.F4:
+                        if (!(Convert.ToSingle(value) - Convert.ToSingle(obj._maxValue) > 0.0 ||
+                            Convert.ToSingle(value) - Convert.ToSingle(obj._minValue) < 0.0))
+                        {
+                            obj._value = Convert.ToSingle(value);
+                            ecChanged = true;
+                        }
+
+                        break;
+                    case SecsFormat.F8:
+                        if (!(Convert.ToDouble(value) - Convert.ToDouble(obj._maxValue) > 0.0 ||
+                            Convert.ToDouble(value) - Convert.ToDouble(obj._minValue) < 0.0))
+                        {
+                            obj._value = Convert.ToDouble(value);
+                            ecChanged = true;
+                        }
+
+                        break;
+                    case SecsFormat.I1:
+                        if (!(Convert.ToSByte(value) > Convert.ToSByte(obj._maxValue) ||
+                            Convert.ToSByte(value) < Convert.ToSByte(obj._minValue)))
+                        {
+                            obj._value = Convert.ToSByte(value);
+                            ecChanged = true;
+                        }
+
+                        break;
+                    case SecsFormat.I2:
+                        if (!(Convert.ToInt16(value) > Convert.ToInt16(obj._maxValue) ||
+                            Convert.ToInt16(value) < Convert.ToInt16(obj._minValue)))
+                        {
+                            obj._value = Convert.ToInt16(value);
+                            ecChanged = true;
+                        }
+
+                        break;
+                    case SecsFormat.I4:
+                        if (!(Convert.ToInt32(value) > Convert.ToInt32(obj._maxValue) ||
+                            Convert.ToInt32(value) < Convert.ToInt32(obj._minValue)))
+                        {
+                            obj._value = Convert.ToInt32(value);
+
+                        }
+
+                        break;
+                    case SecsFormat.I8:
+                        if (!(Convert.ToInt64(value) > Convert.ToInt64(obj._maxValue) ||
+                            Convert.ToInt64(value) < Convert.ToInt64(obj._minValue)))
+                        {
+                            obj._value = Convert.ToInt64(value);
+                            ecChanged = true;
+                        }
+                        break;
+                    case SecsFormat.JIS8: obj._value = value.ToString(); break;
+                    case SecsFormat.U1:
+                        if (!(Convert.ToByte(value) > Convert.ToByte(obj._maxValue) ||
+                            Convert.ToByte(value) < Convert.ToByte(obj._minValue)))
+                        {
+                            obj._value = Convert.ToByte(value);
+                            ecChanged = true;
+                        }
+
+                        break;
+                    case SecsFormat.U2:
+                        if (!(Convert.ToUInt16(value) > Convert.ToUInt16(obj._maxValue) ||
+                            Convert.ToUInt16(value) < Convert.ToUInt16(obj._minValue)))
+                        {
+                            obj._value = Convert.ToUInt16(value);
+                            ecChanged = true;
+                        }
+
+                        break;
+                    case SecsFormat.U4:
+                        if (!(Convert.ToUInt32(value) > Convert.ToUInt32(obj._maxValue) ||
+                            Convert.ToUInt32(value) < Convert.ToUInt32(obj._minValue)))
+                        {
+                            obj._value = Convert.ToUInt32(value);
+                            ecChanged = true;
+                        }
+
+                        break;
+                    case SecsFormat.U8:
+                        if (!(Convert.ToUInt64(value) > Convert.ToUInt64(obj._maxValue) ||
+                            Convert.ToUInt64(value) < Convert.ToUInt64(obj._minValue)))
+                        {
+                            obj._value = Convert.ToUInt64(value);
+                            ecChanged = true;
+                        }
+                        break;
+                }
+
+                //指定值與設定值相同代表切換成功
+                if (ecChanged)
+                {  
+                    if (!Directory.Exists(_ecFolderName))
+                    {
+                        Directory.CreateDirectory(_ecFolderName);
+                    }
+
+                    if (obj._type != SecsFormat.List)
+                    {
+                        StreamWriter sw = new StreamWriter(_ecFolderName + obj._id.ToString() + ".txt");
+
+                        if (obj._type == SecsFormat.ASCII || obj._type == SecsFormat.JIS8)
+                        {
+                            sw.WriteLine(obj._value);
+                        }
+                        else if (obj._type == SecsFormat.Binary)
+                        {
+                            string str = "";
+                            foreach (byte temp in (byte[])obj._value)
+                                str = str + "0x" + temp.ToString("X2") + " ";
+
+                            sw.WriteLine(str);
+                        }
+                        else
+                        {
+                            sw.WriteLine(obj._value.ToString());
+                        }
+
+                        //Close the file
+                        sw.Close();
+                    }
+                    else
+                    {
+                        string subFolder = obj._id.ToString();
+                        subFolder = _ecFolderName + subFolder + "\\";
+
+                        RecursionWriteECListToFile(subFolder, (Dictionary<string, SanwaEC>)obj._value);
+                    }
+
+                    SendEventReportAsync(EventName.GEM_EQ_CONST_CHANGED, false);
+                }
+                    
+
+                SetDV(DVName.GEM_DV_ECID_CHANGED, obj._id);
+                SetDV(DVName.GEM_DV_EC_VALUE_CHANGED, obj._value);
+            }
+
+            return obj;
+        }
+        public void GetECData(string name, out SanwaEC ECData)
+        {
+            _ecList.TryGetValue(name, out ECData);
+        }
+        private void RecursionWriteECListToFile(string foldername, Dictionary<string, SanwaEC> ECList)
+        {
+            if (Directory.Exists(foldername))
+            {
+                DelectDir(foldername);
+                //Directory.(foldername);
+            }
+
+            Directory.CreateDirectory(foldername);
+
+            foreach (object ECobject in ECList.Values)
+            {
+                SanwaEC sanwaEC = (SanwaEC)ECobject;
+                if (sanwaEC._type != SecsFormat.List)
+                {
+                    StreamWriter sw = new StreamWriter(foldername + sanwaEC._id.ToString() + ".txt");
+
+                    if (sanwaEC._type == SecsFormat.ASCII || sanwaEC._type == SecsFormat.JIS8)
+                    {
+                        sw.WriteLine(sanwaEC._value);
+                    }
+                    else if (sanwaEC._type == SecsFormat.Binary)
+                    {
+                        string str = "";
+                        foreach (byte temp in (byte[])sanwaEC._value)
+                            str = str + "0x" + temp.ToString("X2") + " ";
+
+                        sw.WriteLine(str);
+                    }
+                    else
+                    {
+                        sw.WriteLine(sanwaEC._value.ToString());
+                    }
+
+                    //Close the file
+                    sw.Close();
+                }
+                else
+                {
+                    string subFolder = sanwaEC._id.ToString();
+                    subFolder = foldername + subFolder + "\\";
+
+                    RecursionWriteECListToFile(subFolder, (Dictionary<string, SanwaEC>)ECobject);
+                }
+            }
+        }
+        public SanwaDV SetDV(string name, object value)
+        {
+            GetDVData(name, out SanwaDV obj);
+
+            if (obj != null && value != null)
+            {
+                switch (obj._format)
+                {
+                    case SecsFormat.ASCII: obj._value = value.ToString(); break;
+                    case SecsFormat.Binary:
+                        var enumerable = value as IEnumerable<byte>;
+                        obj._value = enumerable;
+                        break;
+                    case SecsFormat.Boolean: obj._value = Convert.ToBoolean(value); break;
+                    case SecsFormat.F4: obj._value = Convert.ToSingle(value); break;
+                    case SecsFormat.F8: obj._value = Convert.ToDouble(value); break;
+                    case SecsFormat.I1: obj._value = Convert.ToSByte(value); break;
+                    case SecsFormat.I2: obj._value = Convert.ToInt16(value); break;
+                    case SecsFormat.I4: obj._value = Convert.ToInt32(value); break;
+                    case SecsFormat.I8: obj._value = Convert.ToInt64(value); break;
+                    case SecsFormat.JIS8: obj._value = value.ToString(); break;
+                    case SecsFormat.U1: obj._value = Convert.ToByte(value); break;
+                    case SecsFormat.U2: obj._value = Convert.ToUInt16(value); break;
+                    case SecsFormat.U4: obj._value = Convert.ToUInt32(value); break;
+                    case SecsFormat.U8: obj._value = Convert.ToUInt64(value); break;
+                    case SecsFormat.List: obj._value = (Dictionary<string, SanwaDV>)value; break;
+
+                }
+
+                if (!Directory.Exists(_dvFolderName))
+                {
+                    Directory.CreateDirectory(_dvFolderName);
+                }
+
+                StreamWriter sw = new StreamWriter(_dvFolderName + obj._id.ToString() + ".txt");
+
+                if (obj._format == SecsFormat.ASCII || obj._format == SecsFormat.JIS8)
+                {
+                    sw.WriteLine(obj._value);
+                }
+                else if (obj._format == SecsFormat.Binary)
+                {
+                    string str = "";
+                    foreach (byte temp in (byte[])obj._value)
+                        str = str + "0x" + temp.ToString("X2") + " ";
+
+                    sw.WriteLine(str);
+                }
+                else
+                {
+                    sw.WriteLine(obj._value.ToString());
+                }
+
+                //Close the file
+                sw.Close();
+            }
+            else
+            {
+                string subFolder = obj._id.ToString();
+                subFolder = _dvFolderName + subFolder + "\\";
+
+                RecursionWriteDVListToFile(subFolder, (Dictionary<string, SanwaDV>)obj._value);
+            }
+            return obj;
+        }
+        private void RecursionWriteDVListToFile(string foldername, Dictionary<string, SanwaDV> DVList)
+        {
+            if (Directory.Exists(foldername))
+            {
+                DelectDir(foldername);
+            }
+
+            Directory.CreateDirectory(foldername);
+
+            foreach (object DVobject in DVList.Values)
+            {
+                SanwaDV sanwaDV = (SanwaDV)DVobject;
+                if (sanwaDV._format != SecsFormat.List)
+                {
+                    StreamWriter sw = new StreamWriter(foldername + sanwaDV._id.ToString() + ".txt");
+
+                    if (sanwaDV._format == SecsFormat.ASCII || sanwaDV._format == SecsFormat.JIS8)
+                    {
+                        sw.WriteLine(sanwaDV._value);
+                    }
+                    else if (sanwaDV._format == SecsFormat.Binary)
+                    {
+                        string str = "";
+                        foreach (byte temp in (byte[])sanwaDV._value)
+                            str = str + "0x" + temp.ToString("X2") + " ";
+
+                        sw.WriteLine(str);
+                    }
+                    else
+                    {
+                        sw.WriteLine(sanwaDV._value.ToString());
+                    }
+
+                    //Close the file
+                    sw.Close();
+                }
+                else
+                {
+                    string subFolder = sanwaDV._id.ToString();
+                    subFolder = foldername + subFolder + "\\";
+
+                    RecursionWriteDVListToFile(subFolder, (Dictionary<string, SanwaDV>)DVobject);
+                }
+            }
+        }
+        public void GetDVData(string name, out SanwaDV DVData)
+        {
+            _dvList.TryGetValue(name, out DVData);
+        }
+        public async Task SendEventReportAsync(string eventName, bool annotated)
+        {
+            if (_secsGem.State != ConnectionState.Selected) return;
+
+            if (!(_currentState == CONTROL_STATE.ON_LINE_LOCAL ||
+                _currentState == CONTROL_STATE.ON_LINE_REMOTE)) return;
+
+            _eventList.TryGetValue(eventName, out SanwaEvent sanwaEvent);
+            if (sanwaEvent == null) return;
+            if (!sanwaEvent._enabled) return;
+
+            _ecList.TryGetValue(ECName.GEM_DATAID_FORMAT, out SanwaEC sanwaEC);
+            if (sanwaEC == null) return;;
+
+            SanwaStrFunSetting strfunObj;
+            if(!annotated)
+            {
+                _strFunList.TryGetValue("S6F11", out strfunObj);
+                if (strfunObj == null) return;
+            }
+            else
+            {
+                _strFunList.TryGetValue("S6F13", out strfunObj);
+                if (strfunObj == null) return;
+            }
+
+
+            _svList.TryGetValue(SVName.GEM_PREVIOUS_CEID, out SanwaSV sanwaSV);
+            if (sanwaSV != null)
+                SetSV(SVName.GEM_PREVIOUS_CEID, sanwaSV._id);
+
+            //Data 累加
+            _dataID = _dataID + 1;
+
+            SanwaEC ecObj;
+
+            SecsMessage secsMessage = new SecsMessage(6, 11, strfunObj.Text);
+
+            string ReplyMSG = GetMessageName(secsMessage.ToSml());
+
+            ReplyMSG += "< L[3]\r\n";
+            switch (sanwaEC._value.ToString())
+            {
+                case "1":
+                    ReplyMSG += GetTypeStringValue(SecsFormat.I1, (sbyte)_dataID);
+                    break;
+                case "2":
+                    ReplyMSG += GetTypeStringValue(SecsFormat.I2, (short)_dataID);
+                    break;
+                case "3":
+                    ReplyMSG += GetTypeStringValue(SecsFormat.I4, (int)_dataID);
+                    break;
+                case "4":
+                    ReplyMSG += GetTypeStringValue(SecsFormat.U1, (byte)_dataID);
+                    break;
+                case "5":
+                    ReplyMSG += GetTypeStringValue(SecsFormat.U2, (ushort)_dataID);
+                    break;
+                case "6":
+                    ReplyMSG += GetTypeStringValue(SecsFormat.U4, (uint)_dataID);
+                    break;
+            }
+
+            //目前暫定所有的CEID為"U4"
+            ReplyMSG += "<U4[0] " + sanwaEvent._id.ToString() + ">\r\n";
+            ReplyMSG += GetEventReportSML(sanwaEvent, annotated);
+            //RPTList end
+            ReplyMSG += ">\r\n";
+
+
+            SecsMessage replyMSG = ReplyMSG.ToSecsMessage();
+            //GEM_WBIT_S6
+            _ecList.TryGetValue(ECName.GEM_WBIT_S6, out ecObj);
+            replyMSG.ReplyExpected = "1" == ecObj._value.ToString() ? true : false;
+
+            _secsGem.SendAsync(replyMSG);
         }
         public void ReplyUnrecognizedStreamType(PrimaryMessageWrapper e)
         {
-            e.ReplyAsync(_secsMessages[9, 3].FirstOrDefault());
+            //e.ReplyAsync(_secsMessages[9, 3].FirstOrDefault());
+            SecsMessage replySecsmsg = new SecsMessage(e.Message.S, (byte)3, "Unrecognized Stream Type(USN)")
+            {
+                ReplyExpected = false
+            };
+
+            string newReplyMsg = GetMessageName(replySecsmsg.ToSml());
+
+            e.ReplyAsync(newReplyMsg.ToSecsMessage());
+
         }
         public void ReplyUnrecognizedFunctionType(PrimaryMessageWrapper e)
         {
-            e.ReplyAsync(_secsMessages[9, 5].FirstOrDefault());
+            SecsMessage replySecsmsg = new SecsMessage(e.Message.S, (byte)5, "Unrecognized Function Type(UFN)")
+            {
+                ReplyExpected = false
+            };
+
+            string newReplyMsg = GetMessageName(replySecsmsg.ToSml());
+
+            e.ReplyAsync(newReplyMsg.ToSecsMessage());
         }
         public void ReplyIllegalData(PrimaryMessageWrapper e)
         {
-            e.ReplyAsync(_secsMessages[9, 7].FirstOrDefault());
+            SecsMessage replySecsmsg = new SecsMessage(e.Message.S, (byte)7, "Illegal Data (IDN)")
+            {
+                ReplyExpected = false
+            };
+
+            string newReplyMsg = GetMessageName(replySecsmsg.ToSml());
+
+            e.ReplyAsync(newReplyMsg.ToSecsMessage());
         }
         private bool IsOfflineState()
         {
@@ -293,9 +766,9 @@ namespace SanwaSecsDll
                     try
                     {
                         receiveSecsmsg = e.Message;
-                        replySecsmsg = _secsMessages[e.Message.S, (byte)(e.Message.F + 1)].FirstOrDefault();
+                        //replySecsmsg = _secsMessages[e.Message.S, (byte)(e.Message.F + 1)].FirstOrDefault();
 
-                        if (replySecsmsg == null || receiveSecsmsg == null)
+                        if (receiveSecsmsg == null)
                         {
                             //無相關訊息
                             ReplyIllegalData(e);
@@ -303,12 +776,29 @@ namespace SanwaSecsDll
                             return lResult;
                         }
 
+                        string SearchKey = "S" + receiveSecsmsg.S.ToString() + "F" + ((int)receiveSecsmsg.F).ToString();
+                        _smlManager._messageList.TryGetValue(SearchKey, out SanwaSML smlObj);
+
+                        if (smlObj == null)
+                        {
+                            lResult = PROCESS_MSG_RESULT.PROCESS_NOT_FINISH;
+                            return lResult;
+                        }
+
+                        SearchKey = "S" + receiveSecsmsg.S.ToString() + "F" + ((int)receiveSecsmsg.F + 1).ToString();
+                        _smlManager._messageList.TryGetValue(SearchKey, out SanwaSML smlObj2);
+                        if (smlObj2 == null)
+                        {
+                            lResult = PROCESS_MSG_RESULT.PROCESS_NOT_FINISH;
+                            return lResult;
+                        }
+
                         lResult = PROCESS_MSG_RESULT.PROCESS_FINISH;
 
-                        SecsMessage tempReplySecsmsg = new SecsMessage(replySecsmsg.S, replySecsmsg.F, replySecsmsg.Name);
+                        replySecsmsg = new SecsMessage(receiveSecsmsg.S, (byte)(receiveSecsmsg.F + 1), smlObj.MessageName);
 
                         if (replySecsmsg.F % 2 == 0)
-                            tempReplySecsmsg.ReplyExpected = false;
+                            replySecsmsg.ReplyExpected = false;
 
                         if (1 == replySecsmsg.S)
                         {
@@ -317,10 +807,13 @@ namespace SanwaSecsDll
                                 if (IsOfflineState())
                                 {
                                     ReplyInOffLineState(e);
+                                    return lResult;
                                 }
-                                else
+
+                                if(!ReplyS1F2(e, receiveSecsmsg, replySecsmsg))
                                 {
-                                    ReplyMDLNAndSOFTREV(tempReplySecsmsg, replySecsmsg, e);
+                                    lResult = PROCESS_MSG_RESULT.PROCESS_NOT_FINISH;
+                                    return lResult;
                                 }
                             }
                             else if (4 == replySecsmsg.F)//Selected Equipment Status Data (SSD) M,H<-E
@@ -331,8 +824,7 @@ namespace SanwaSecsDll
                                     return lResult;
                                 }
 
-                                ReplyS1F4(e, receiveSecsmsg, tempReplySecsmsg);
-
+                                ReplyS1F4(e, receiveSecsmsg, replySecsmsg);
                             }
                             else if (12 == replySecsmsg.F)// Status Variable Namelist Reply(SVNRR) M,H<-E
                             {
@@ -342,55 +834,7 @@ namespace SanwaSecsDll
                                     return lResult;
                                 }
 
-                                //1.複製"收到訊息格式"給"回覆訊息的格式"
-                                //2.根據訊息長度決定根據SVID回覆，還是全部回覆
-                                //2.a.將個別SVID存入List裡面
-                                //2.b.將所有SVID存入List裡面   
-                                //3.根據SVID開始寫檔
-
-                                //1.複製"收到訊息格式"給"回覆訊息的格式"
-                                CopyReceiveMsgToReply(ref receiveSecsmsg, ref tempReplySecsmsg);
-
-                                Dictionary<string, SecsFormat> svIDList = new Dictionary<string, SecsFormat>();
-                                if (tempReplySecsmsg.SecsItem.Count > 0)//2.根據訊息長度決定根據SVID回覆，還是全部回覆
-                                {
-                                    //a.將個別SVID存入List裡面
-                                    foreach (Item items in receiveSecsmsg.SecsItem.Items)
-                                    {
-                                        SetItemToStringType(items, out string id);
-                                        //SanwaSV svObj = _svList.FirstOrDefault(x => x.Value._id == id).Value;
-                                        _svIDList.TryGetValue(id, out SanwaSV svObj);
-                                        if (svObj != null)
-                                        {
-                                            svIDList.Add(svObj._id, items.Format);
-                                        }
-                                        else
-                                        {
-                                            svIDList.Add(id, items.Format);
-                                        }
-
-                                    }
-                                }
-                                else
-                                {
-                                    //2.b.將所有SVID存入List裡面 
-                                    foreach (KeyValuePair<string, SanwaSV> item in _svIDList)
-                                    {
-                                        //暫時將輸出SVID的Format定義為U4
-                                        svIDList.Add(item.Key, SecsFormat.U4);
-                                    }
-                                }
-
-                                //3.根據SVID開始寫檔
-                                string smlFormat = tempReplySecsmsg.ToSml();
-
-                                //4.編輯SML檔
-                                string NewsmlFormat = ParseSVNRRToSML(svIDList, smlFormat);
-
-                                //5.轉換為SECSMessage
-                                tempReplySecsmsg = NewsmlFormat.ToSecsMessage();
-
-                                e.ReplyAsync(tempReplySecsmsg);
+                                ReplyS1F12(e, receiveSecsmsg, replySecsmsg);
                             }
                             else if (14 == replySecsmsg.F)//Establish Communications Request Acknowledge (CRA)
                             {
@@ -400,11 +844,16 @@ namespace SanwaSecsDll
                                     return lResult;
                                 }
 
-                                ReplyMDLNAndSOFTREV(tempReplySecsmsg, replySecsmsg, e);
+                                if (!ReplyS1F14(e, receiveSecsmsg, replySecsmsg))
+                                {
+                                    lResult = PROCESS_MSG_RESULT.PROCESS_NOT_FINISH;
+                                    return lResult;
+                                }
+
                             }
                             else if (16 == replySecsmsg.F)  //OFF-LINE ACKNOWLEDGE(OFLA)
                             {
-                                ChangeControlState(CONTROL_STATE.HOST_OFF_LINE, e, tempReplySecsmsg, ref lResult);
+                                ChangeControlState(CONTROL_STATE.HOST_OFF_LINE, e, replySecsmsg, ref lResult);
                             }
                             else if (18 == replySecsmsg.F)  //ON-LINE ACKNOWLEDGE(OFLA)
                             {
@@ -412,27 +861,28 @@ namespace SanwaSecsDll
                                 _ecList.TryGetValue(ECName.GEM_ON_LINE_SUBSTATE, out SanwaEC sanwaEC);
                                 if (sanwaEC == null)
                                 {
-                                    _logger.Error("GEM_ON_LINE_SUBSTATE NO DEFINED");
+                                    ChangeControlState(CONTROL_STATE.ON_LINE_LOCAL, e, replySecsmsg, ref lResult);
                                 }
                                 else
                                 {
                                     //Host On-line 需求 4:On-line/Local, 5:ON-line/Remote
-                                    if ("4" == sanwaEC._defaultValue.ToString())
+                                    if ("4" == sanwaEC._value.ToString())
                                     {
-                                        ChangeControlState(CONTROL_STATE.ON_LINE_LOCAL, e, tempReplySecsmsg, ref lResult);
+                                        ChangeControlState(CONTROL_STATE.ON_LINE_LOCAL, e, replySecsmsg, ref lResult);
                                     }
-                                    else if ("5" == sanwaEC._defaultValue.ToString())
+                                    else if ("5" == sanwaEC._value.ToString())
                                     {
-                                        ChangeControlState(CONTROL_STATE.ON_LINE_REMOTE, e, tempReplySecsmsg, ref lResult);
+                                        ChangeControlState(CONTROL_STATE.ON_LINE_REMOTE, e, replySecsmsg, ref lResult);
                                     }
                                 }
                             }
                             else
                             {
                                 //Replay S9F5
-                                //ReplyUnrecognizedFunctionType(e);
-                                //由應用層回復
-                                lResult = PROCESS_MSG_RESULT.PROCESS_NOT_FINISH;
+                                //基本上流程不會到這邊,
+                                //如果Config檔沒有定義,
+                                //就前面流程將通知AP端回覆
+                                ReplyUnrecognizedFunctionType(e);
                             }
                         }
                         else if (2 == replySecsmsg.S)
@@ -442,20 +892,21 @@ namespace SanwaSecsDll
                                 ReplyInOffLineState(e);
                                 return lResult;
                             }
+
                             if (14 == replySecsmsg.F)
                             {
-                                ReplyS2F14(e, receiveSecsmsg, tempReplySecsmsg);
+                                ReplyS2F14(e, receiveSecsmsg, replySecsmsg);
                             }
                             else if (16 == replySecsmsg.F)
                             {
                                 byte[] ack = { SanwaACK.EAC_ACK };
                                 ReceiveS2F15(e, ref ack);
 
-                                ReplyACK(e, tempReplySecsmsg, ack);
+                                ReplyACK(e, replySecsmsg, ack);
                             }
                             else if (18 == replySecsmsg.F)
                             {
-                                ReplyS2F18(e, tempReplySecsmsg);
+                                ReplyS2F18(e, replySecsmsg);
                             }
                             else if (24 == replySecsmsg.F)  //Trace Initialize Acknowledge (TIA) 
                             {
@@ -463,61 +914,61 @@ namespace SanwaSecsDll
 
                                 SanwaTIS sanwaTIS = new SanwaTIS();
 
-                                ReceiveS2F23(e, ref ack, ref sanwaTIS);
-
-                                ReplyACK(e, tempReplySecsmsg, ack);
-
-                                SanwaTISThread sanwaTISThread = new SanwaTISThread
+                                if(ReceiveS2F23(e, ref ack, ref sanwaTIS))
                                 {
-                                    _sanwaTIS = sanwaTIS
-                                };
+                                    ReplyACK(e, replySecsmsg, ack);
 
-                                ExecuteTraceData(sanwaTISThread);
+                                    SanwaTISThread sanwaTISThread = new SanwaTISThread
+                                    {
+                                        _sanwaTIS = sanwaTIS
+                                    };
+
+                                    ExecuteTraceData(sanwaTISThread);
+                                }
+                                else
+                                {
+                                    lResult = PROCESS_MSG_RESULT.PROCESS_NOT_FINISH;
+                                    return lResult;
+                                }
+
 
                             }
                             else if (30 == replySecsmsg.F)  //Equipment Constant Namelist (ECN)
                             {
-                                ReplyS2F30(e, receiveSecsmsg, tempReplySecsmsg);
+                                ReplyS2F30(e, receiveSecsmsg, replySecsmsg);
                             }
                             else if (32 == replySecsmsg.F)
                             {
                                 byte[] ack = { SanwaACK.TIACK_ACK };
                                 ReceiveS2F31(e, ref ack);
-                                ReplyACK(e, tempReplySecsmsg, ack);
+                                ReplyACK(e, replySecsmsg, ack);
                             }
                             else if (34 == replySecsmsg.F)
                             {
                                 byte[] ack = { SanwaACK.DRACK_ACK };
                                 ReceiveS2F33(e, ref ack);
-                                ReplyACK(e, tempReplySecsmsg, ack);
+                                ReplyACK(e, replySecsmsg, ack);
                             }
                             else if (36 == replySecsmsg.F)
                             {
                                 byte[] ack = { SanwaACK.DRACK_ACK };
                                 ReceiveS2F35(e, ref ack);
-                                ReplyACK(e, tempReplySecsmsg, ack);
+                                ReplyACK(e, replySecsmsg, ack);
                             }
                             else if (38 == replySecsmsg.F)
                             {
                                 byte[] ack = { SanwaACK.ERACK_ACK };
                                 ReceiveS2F37(e, ref ack);
-                                ReplyACK(e, tempReplySecsmsg, ack);
+                                ReplyACK(e, replySecsmsg, ack);
 
                                 SetEventEnabledForSV();
-                            }
-                            else if (42 == replySecsmsg.F)
-                            {
-                                lResult = PROCESS_MSG_RESULT.PROCESS_NOT_FINISH;
-                                return lResult;
-                            }
-                            else if (50 == replySecsmsg.F)
-                            {
-                                lResult = PROCESS_MSG_RESULT.PROCESS_NOT_FINISH;
-                                return lResult;
                             }
                             else
                             {
                                 //Replay S9F5
+                                //基本上流程不會到這邊,
+                                //如果Config檔沒有定義,
+                                //就前面流程將通知AP端回覆
                                 ReplyUnrecognizedFunctionType(e);
                             }
                         }
@@ -531,15 +982,16 @@ namespace SanwaSecsDll
 
                             if (18 == replySecsmsg.F)
                             {
-                                ReplyS3F18(e, receiveSecsmsg, tempReplySecsmsg);
+                                ReplyS3F18(e, receiveSecsmsg, replySecsmsg);
                             }
                             else if(20 == replySecsmsg.F)       // Cancel All Carrier Out Request /Cancel All Carrier Out Acknowledge
                             {
-
+                                lResult = PROCESS_MSG_RESULT.PROCESS_NOT_FINISH;
+                                return lResult;
                             }
                             else if (22 == replySecsmsg.F)
                             {
-                                ReplyS3F22(e, receiveSecsmsg, tempReplySecsmsg);
+                                ReplyS3F22(e, receiveSecsmsg, replySecsmsg);
                             }
                             else if( 24 == replySecsmsg.F)      //S3,F23  Port Group Action Request /S3F24 Port Group Action Acknowledge
                             {
@@ -548,24 +1000,18 @@ namespace SanwaSecsDll
                             }
                             else if (26 == replySecsmsg.F)
                             {
-                                ReplyS3F26(e, receiveSecsmsg, tempReplySecsmsg);
+                                ReplyS3F26(e, receiveSecsmsg, replySecsmsg);
                             }
                             else if(28 == replySecsmsg.F)
                             {
-                                ReplyS3F28(e, receiveSecsmsg, tempReplySecsmsg);
-                            }
-                            else if (30 == replySecsmsg.F)  //Carrier Tag Write Data (CTRD)
-                            {
-                                lResult = PROCESS_MSG_RESULT.PROCESS_NOT_FINISH;
-                                return lResult;
-                            }
-                            else if (32 == replySecsmsg.F)  //Carrier Tag Write Data Acknowledge(CTWDA)
-                            {
-                                lResult = PROCESS_MSG_RESULT.PROCESS_NOT_FINISH;
-                                return lResult;
+                                ReplyS3F28(e, receiveSecsmsg, replySecsmsg);
                             }
                             else
                             {
+                                //Replay S9F5
+                                //基本上流程不會到這邊,
+                                //如果Config檔沒有定義,
+                                //就前面流程將通知AP端回覆
                                 ReplyUnrecognizedFunctionType(e);
                             }
                         }
@@ -580,17 +1026,27 @@ namespace SanwaSecsDll
                             if (4 == replySecsmsg.F) //Enable/Disable Alarm Acknowledge (EAA)
                             {
                                 byte[] ack = { SanwaACK.ACKC5_ACK };
-                                ReceiveS5F3(e, ref ack);
-                                ReplyACK(e, tempReplySecsmsg, ack);
-
-                                SetAlarmEnabledForSV();
+                                if(ReceiveS5F3(e, ref ack))
+                                {
+                                    ReplyACK(e, replySecsmsg, ack);
+                                    SetAlarmEnabledForSV();
+                                }
+                                else
+                                {
+                                    lResult = PROCESS_MSG_RESULT.PROCESS_NOT_FINISH;
+                                    return lResult;
+                                }
                             }
                             else if (6 == replySecsmsg.F)   //List Alarms Request (LAR)
                             {
-                                ReplyS5F6(e, receiveSecsmsg, tempReplySecsmsg);
+                                ReplyS5F6(e, receiveSecsmsg, replySecsmsg);
                             }
                             else
                             {
+                                //Replay S9F5
+                                //基本上流程不會到這邊,
+                                //如果Config檔沒有定義,
+                                //就前面流程將通知AP端回覆
                                 ReplyUnrecognizedFunctionType(e);
                             }
                         }
@@ -604,19 +1060,27 @@ namespace SanwaSecsDll
 
                             if (16 == replySecsmsg.F) //Enable/Disable Alarm Acknowledge (EAA)
                             {
-                                ReplyEventReport(e, receiveSecsmsg, tempReplySecsmsg, false);
+                                ReplyEventReport(e, receiveSecsmsg, replySecsmsg, false);
                             }
                             else if (18 == replySecsmsg.F) //Annotated Event Report Data(AERD)
                             {
-                                ReplyEventReport(e, receiveSecsmsg, tempReplySecsmsg, true);
+                                ReplyEventReport(e, receiveSecsmsg, replySecsmsg, true);
                             }
                             else if (20 == replySecsmsg.F) //Individual Report Data(IRD)
                             {
-                                ReplyIndividualReport(e, receiveSecsmsg, tempReplySecsmsg, false);
+                                ReplyIndividualReport(e, receiveSecsmsg, replySecsmsg, false);
                             }
                             else if (22 == replySecsmsg.F) //Annotated Individual Report Data(IARD)
                             {
-                                ReplyIndividualReport(e, receiveSecsmsg, tempReplySecsmsg, true);
+                                ReplyIndividualReport(e, receiveSecsmsg, replySecsmsg, true);
+                            }
+                            else
+                            {
+                                //Replay S9F5
+                                //基本上流程不會到這邊,
+                                //如果Config檔沒有定義,
+                                //就前面流程將通知AP端回覆
+                                ReplyUnrecognizedFunctionType(e);
                             }
 
                         }
@@ -628,14 +1092,24 @@ namespace SanwaSecsDll
                                 return lResult;
                             }
 
-                            if (4 == replySecsmsg.F || 6 == replySecsmsg.F)    // Terminal Display, Single (VTN)
+                            if (4 == replySecsmsg.F)    // Terminal Display, Single (VTN)
                             {
                                 byte[] ack = { SanwaACK.ACKC10_ACK };
                                 ReceiveS10F3(e, ref ack);
-                                ReplyACK(e, tempReplySecsmsg, ack);
+                                ReplyACK(e, replySecsmsg, ack);
+                            }
+                            else if(6 == replySecsmsg.F)
+                            {
+                                byte[] ack = { SanwaACK.ACKC10_ACK };
+                                ReceiveS10F3(e, ref ack);
+                                ReplyACK(e, replySecsmsg, ack);
                             }
                             else
                             {
+                                //Replay S9F5
+                                //基本上流程不會到這邊,
+                                //如果Config檔沒有定義,
+                                //就前面流程將通知AP端回覆
                                 ReplyUnrecognizedFunctionType(e);
                             }
 
@@ -643,6 +1117,9 @@ namespace SanwaSecsDll
                         else
                         {
                             //Replay S9F3
+                            //基本上流程不會到這邊,
+                            //如果Config檔沒有定義,
+                            //就前面流程將通知AP端回覆
                             ReplyUnrecognizedStreamType(e);
                         }
                     }
@@ -1100,50 +1577,27 @@ namespace SanwaSecsDll
             reply.F = (byte)(receive.F + 1);
             reply.ReplyExpected = false;
         }
-        private void ReplyMDLNAndSOFTREV(SecsMessage reply, SecsMessage replyfomat, PrimaryMessageWrapper e)
-        {
-            reply = replyfomat.ToSml().ToSecsMessage();
-            foreach (var item in reply.SecsItem.Items)
-            {
-                if (item.Format == SecsFormat.List)
-                {
-                    RecursivelyFindMDLNAndSOFTREV(item);
-                }
-                else if (item.Format == SecsFormat.ASCII)
-                {
-                    if (item.GetString().Equals("MDLN"))
-                    {
-                        item.SetString(_mdln);
-                    }
-                    else if (item.GetString().Equals("SOFTREV"))
-                    {
-                        item.SetString(_softRev);
-                    }
-                }
-            }
-            e.ReplyAsync(reply);
-        }
-        private void RecursivelyFindMDLNAndSOFTREV(Item id)
-        {
-            foreach (var subItem in id.Items)
-            {
-                if (subItem.Format == SecsFormat.List)
-                {
-                    RecursivelyFindMDLNAndSOFTREV(subItem);
-                }
-                else if (subItem.Format == SecsFormat.ASCII)
-                {
-                    if (subItem.GetString().Equals("MDLN"))
-                    {
-                        subItem.SetString(_mdln);
-                    }
-                    else if (subItem.GetString().Equals("SOFTREV"))
-                    {
-                        subItem.SetString(_softRev);
-                    }
-                }
-            }
-        }
+        //private void RecursivelyFindMDLNAndSOFTREV(Item id)
+        //{
+        //    foreach (var subItem in id.Items)
+        //    {
+        //        if (subItem.Format == SecsFormat.List)
+        //        {
+        //            RecursivelyFindMDLNAndSOFTREV(subItem);
+        //        }
+        //        else if (subItem.Format == SecsFormat.ASCII)
+        //        {
+        //            if (subItem.GetString().Equals("MDLN"))
+        //            {
+        //                subItem.SetString(_mdln);
+        //            }
+        //            else if (subItem.GetString().Equals("SOFTREV"))
+        //            {
+        //                subItem.SetString(_softRev);
+        //            }
+        //        }
+        //    }
+        //}
         private void SetItemToStringType(Item item, out string id)
         {
             SetItemToStringType(item, out id, out SecsFormat secsFormat);
@@ -1320,6 +1774,10 @@ namespace SanwaSecsDll
                             }
                         }
                     }
+
+                    if (mode == 0) { SetSV(SVName.GEM_ALARM_ENABLED, svList); }
+                    else if (mode == 1) { SetSV(SVName.GEM_ALARM_SET, svList); }
+                    else if (mode == 2) { SetSV(SVName.GEM_EVENT_ENABLED, svList); }
 
                 }
             }

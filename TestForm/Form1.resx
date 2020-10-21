@@ -6247,24 +6247,6 @@
   <metadata name="lineDenyAccessMode1.Size" type="System.Drawing.Size, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>286, 296</value>
   </metadata>
-  <metadata name="lineDenyAccessMode2.Bounds" type="System.Drawing.Rectangle, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>18, 15, 287, 295</value>
-  </metadata>
-  <metadata name="lineDenyAccessMode2.Location" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>18, 15</value>
-  </metadata>
-  <metadata name="lineDenyAccessMode2.Size" type="System.Drawing.Size, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>287, 295</value>
-  </metadata>
-  <metadata name="lineDenyAccessMode1.Bounds" type="System.Drawing.Rectangle, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>19, 15, 286, 296</value>
-  </metadata>
-  <metadata name="lineDenyAccessMode1.Location" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>19, 15</value>
-  </metadata>
-  <metadata name="lineDenyAccessMode1.Size" type="System.Drawing.Size, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>286, 296</value>
-  </metadata>
   <data name="picAccessMode.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
         iVBORw0KGgoAAAANSUhEUgAAAbwAAAHgCAYAAADe/NhTAAAABGdBTUEAALGPC/xhBQAAAAlwSFlzAAAO

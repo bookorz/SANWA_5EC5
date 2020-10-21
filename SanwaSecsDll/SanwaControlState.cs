@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using System.Linq;
 using System.Threading;
@@ -10,9 +11,44 @@ namespace SanwaSecsDll
     public partial class SanwaBaseExec
     {
         public event EventHandler<CONTROL_STATE> ChangeControlStateEvent;
+
+        /// <summary>
+        /// 在OFFLine的請況下收到Event
+        /// </summary>
+        public event EventHandler<PrimaryMessageWrapper> ReceiveInOffLineEvent;
+
         private void ReplyInOffLineState(PrimaryMessageWrapper e)
         {
-            e.ReplyAsync(_secsMessages[e.Message.S, 0].FirstOrDefault());
+            string SearchKey = "S" + e.Message.S.ToString() + "F0";
+            _smlManager._messageList.TryGetValue(SearchKey, out SanwaSML smlObj);
+
+            if(smlObj != null)
+            {
+                SecsMessage replySecsmsg = new SecsMessage(e.Message.S, (byte)0, smlObj.MessageName);
+                replySecsmsg.ReplyExpected = false;
+
+                string newReplyMsg = GetMessageName(replySecsmsg.ToSml());
+
+                string text = smlObj.Text;
+                string line;
+                using (StringReader reader = new StringReader(text))
+                {
+                    while ((line = reader.ReadLine()) != null)
+                    {
+                        newReplyMsg += line;
+                        newReplyMsg += "\r\n";
+                    }
+                }
+
+                e.ReplyAsync(newReplyMsg.ToSecsMessage());
+            }
+            else
+            {
+                ThreadPool.QueueUserWorkItem(callback =>
+                {
+                    ReceiveInOffLineEvent?.Invoke(this, e);
+                });
+            }
         }
         private void ReplyOnLineState(PrimaryMessageWrapper e, SecsMessage secsMessage, byte[] ONLACK)
         {
@@ -191,9 +227,10 @@ namespace SanwaSecsDll
             }
 
 
-            _svList.TryGetValue(SVName.GEM_CONTROL_STATE, out svObj);
-            if (svObj != null)
-                svObj._value = GetCurrentStateForSV();
+            //_svList.TryGetValue(SVName.GEM_CONTROL_STATE, out svObj);
+            //if (svObj != null)
+            //    svObj._value = GetCurrentStateForSV();
+            SetSV(SVName.GEM_CONTROL_STATE, GetCurrentStateForSV());
 
 
             //傳給使用端

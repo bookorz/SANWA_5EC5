@@ -103,10 +103,9 @@ namespace SanwaSecsDll
                 Win32GetSystemTime(ref systime);
 
                 string datetime = GetDateTime();
-                _svList.TryGetValue(SVName.GEM_CLOCK, out SanwaSV svObj);
-
-                if (svObj != null) svObj._value = datetime;
-
+                //_svList.TryGetValue(SVName.GEM_CLOCK, out SanwaSV svObj);
+                //if (svObj != null) svObj._value = datetime;
+                SetSV(SVName.GEM_CLOCK, datetime);
                 //避免跨小時
                 if (systime.wHour == hosttime.wHour)
                 { 

@@ -11,7 +11,6 @@ namespace SanwaSecsDll
     {
         public void ReplyS1F4(PrimaryMessageWrapper e, SecsMessage receiveMsg, SecsMessage replyMsg)
         {
-            //List<string> sVIDList = new List<string>();
             Dictionary<string, SecsFormat> sVIDList = new Dictionary<string, SecsFormat>();
             CheckReceiveIDList(receiveMsg, ref sVIDList, _svIDList);
 

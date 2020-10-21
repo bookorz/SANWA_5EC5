@@ -22,7 +22,7 @@ namespace TestForm
     {
         SanwaSecs _secsGemTool;
         SecsLogger _secsLogger;
-        SecsMessageList _secsMessagesList;
+        //SecsMessageList _secsMessagesList;
 
         readonly BindingList<PrimaryMessageWrapper> recvBuffer = new BindingList<PrimaryMessageWrapper>();
 
@@ -78,10 +78,10 @@ namespace TestForm
             try
             {
 #if DEBUG
-                _secsMessagesList = new SecsMessageList("..\\Debug\\Sml\\common.sml");
+                //_secsMessagesList = new SecsMessageList("..\\Debug\\Sml\\common.sml");
 
 #else
-                _secsMessagesList = new SecsMessageList("..\\Release\\Sml\\common.sml");
+                //_secsMessagesList = new SecsMessageList("..\\Release\\Sml\\common.sml");
 #endif
             }
             catch (Exception ex)
@@ -89,17 +89,18 @@ namespace TestForm
                 MessageBox.Show(ex.Message);
             }
 
-            listboxSmlFile.BeginUpdate();
-            foreach (var msg in _secsMessagesList)
-                listboxSmlFile.Items.Add($"S{msg.S,-3}F{msg.F,3} : {msg.Name}");
-            listboxSmlFile.EndUpdate();
+            //listboxSmlFile.BeginUpdate();
+            //foreach (var msg in _secsMessagesList)
+            //    listboxSmlFile.Items.Add($"S{msg.S,-3}F{msg.F,3} : {msg.Name}");
+            //listboxSmlFile.EndUpdate();
 
 
             _secsGemTool = new SanwaSecs
             {
                 _logger = _secsLogger,
-                _secsMessages = _secsMessagesList
             };
+
+            _secsGemTool.messageFileName = "SecsMessage.json";
 #if DEBUG
             //設定路徑
             _secsGemTool.eqpSVFileName = "..\\Debug\\Csv\\EqpSV.csv";
@@ -107,6 +108,7 @@ namespace TestForm
             _secsGemTool.eqpECFileName = "..\\Debug\\Csv\\EpqEC.csv";
             _secsGemTool.eqpAlarmFileName = "..\\Debug\\Csv\\EqpAlarm.csv";
             _secsGemTool.eqpDVFileName = "..\\Debug\\Csv\\EqpDV.csv";
+            _secsGemTool.ReadSMLFile("..\\Debug\\Sml\\common.sml");
 #else
             _secsGemTool.eqpSVFileName = "..\\Release\\Csv\\EqpSV.csv";
             _secsGemTool.eqpEventFileName = "..\\Release\\Csv\\EqpEvent.csv";
@@ -114,12 +116,12 @@ namespace TestForm
             _secsGemTool.eqpAlarmFileName = "..\\Debug\\Csv\\EpqAlarm.csv";
 
 #endif
+            ///底層不處裡的資料
+            _secsGemTool.PrimaryMessageReceivedEvent += PrimaryMessageReceived;
+
             _secsGemTool.ConnectionStateChangedEvent += new SanwaSecs.ConnectionStateChanged(UpdateConnectionState);
 
             _secsGemTool.ChangeControlStateEvent += UpdateControlState;
-
-            _secsGemTool.PrimaryMessageReceivedEvent += PrimaryMessageReceived;
-
             _secsGemTool.S3F21AutoModeEvent += UpdateAccessMode;
             _secsGemTool.S3F21ManualModeEvent += UpdateAccessMode;
 
@@ -206,7 +208,19 @@ namespace TestForm
                     rtbCustomize.AppendText("=========================================\r\n");
                     rtbCustomize.AppendText("收到 Stream: " + e.Message.S.ToString() + ", Function:" + e.Message.F.ToString() + "\r\n");
 
-                    if (e.Message.S.ToString() == "2" && e.Message.F.ToString() == "41")
+                    if(e.Message.S.ToString() == "1" && e.Message.F.ToString() == "1")
+                    {
+                        _secsGemTool.GetSVData(SVName.GEM_MDLN, out SanwaSV mdlnSV);
+                        _secsGemTool.GetSVData(SVName.GEM_SOFTREV, out SanwaSV softrevSV);
+                        SecsMessage s1f2 = new SecsMessage(1, 2, "Alarm Report Send (ARS)",
+                                Item.L(
+                                    Item.A(mdlnSV._value.ToString() + "_Overwrite"),
+                                    Item.A(softrevSV._value.ToString() + "_Overwrite")),
+                                    false);
+
+                        e.ReplyAsync(s1f2);
+                    }
+                    else if (e.Message.S.ToString() == "2" && e.Message.F.ToString() == "41")
                     {
                         ReplyS2F42(e);
                     }
@@ -269,7 +283,7 @@ namespace TestForm
             //          2. < CPACKn > parameter n reason
 
             string replySML = "";
-            replySML = _secsGemTool.GetSMLName(e.Message.S, e.Message.F + 1);
+            replySML = " Host Command Acknowledge (HCA) :'S2F42'\r\n";
             replySML += "<L[2]\r\n";
             byte[] HCACK = { SanwaACK.HCACK_ACK };
             replySML += "< B[0] " + HCACK.ToHexString() + ">\r\n";
@@ -558,9 +572,9 @@ namespace TestForm
         }
         private void listboxSmlFile_SelectedIndexChanged(object sender, EventArgs e)
         {
-            SecsMessage secsMsg = _secsMessagesList[listboxSmlFile.SelectedIndex];
-            tbShowSML.Text = secsMsg.ToSml();
-            btnSent.Enabled = (secsMsg.F % 2) != 0 ? true :false;
+            //SecsMessage secsMsg = _secsMessagesList[listboxSmlFile.SelectedIndex];
+            //tbShowSML.Text = secsMsg.ToSml();
+            //btnSent.Enabled = (secsMsg.F % 2) != 0 ? true :false;
         }
         private void listboxSmlFile_MouseDoubleClick(object sender, MouseEventArgs e)
         {
@@ -568,18 +582,18 @@ namespace TestForm
         }
         private async void btnSent_Click(object sender, EventArgs e)
         {
-            if (_secsGemTool.State != SanwaSecsDll.ConnectionState.Selected)
-                return;
+            //if (_secsGemTool.State != SanwaSecsDll.ConnectionState.Selected)
+            //    return;
 
-            try
-            {
-                SecsMessage secsMsg = _secsMessagesList[listboxSmlFile.SelectedIndex];
-                await _secsGemTool.SetStreamFunction(secsMsg);
-            }
-            catch (SecsException ex)
-            {
-                _secsLogger.Error("Form1.btnSent_Click", ex);
-            }
+            //try
+            //{
+            //    SecsMessage secsMsg = _secsMessagesList[listboxSmlFile.SelectedIndex];
+            //    await _secsGemTool.SetStreamFunction(secsMsg);
+            //}
+            //catch (SecsException ex)
+            //{
+            //    _secsLogger.Error("Form1.btnSent_Click", ex);
+            //}
         }
         private void richTextBox1_TextChanged(object sender, EventArgs e)
         {
@@ -599,9 +613,9 @@ namespace TestForm
             edMDLN.Text = _secsGemTool.strMDLN;
             edSOFTREV.Text = _secsGemTool.strSOFTREV;
 
-            comSVID.DataSource = new BindingSource(_secsGemTool._svList, null);
-            comSVID.DisplayMember = "Key";
-            comSVID.ValueMember = "Value";
+            //comSVID.DataSource = new BindingSource(_secsGemTool._svList, null);
+            //comSVID.DisplayMember = "Key";
+            //comSVID.ValueMember = "Value";
 
             //模擬給值 start ++
             _secsGemTool.SetSV("GEM_LINK_STATE", 2);
@@ -2177,6 +2191,20 @@ namespace TestForm
 
 
             ThreadPool.QueueUserWorkItem(new WaitCallback(DoNormalRoundtrip3), lpObj);
+        }
+
+        private void btnSetS1F13_Click(object sender, EventArgs e)
+        {
+
+            _secsGemTool.GetSVData(SVName.GEM_MDLN, out SanwaSV mdlnSV);
+            _secsGemTool.GetSVData(SVName.GEM_SOFTREV, out SanwaSV softrevSV);
+            SecsMessage s1f13 = new SecsMessage(1, 13, "Establish Communications Request(CR)",
+                    Item.L(
+                        Item.A(mdlnSV._value.ToString()),
+                        Item.A(softrevSV._value.ToString())),
+                        true);
+
+            _secsGemTool.SetStreamFunction(s1f13);
         }
     }
 }

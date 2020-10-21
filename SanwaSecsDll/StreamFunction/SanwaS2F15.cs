@@ -134,20 +134,61 @@ namespace SanwaSecsDll
 
                 switch (ECVItem.Format)
                 {
-                    case SecsFormat.I1: Obj._value = ECVItem.GetValue<sbyte>(); break;
-                    case SecsFormat.I2: Obj._value = ECVItem.GetValue<short>(); break;
-                    case SecsFormat.I4: Obj._value = ECVItem.GetValue<int>(); break;
-                    case SecsFormat.I8: Obj._value = ECVItem.GetValue<long>(); break;
-                    case SecsFormat.U8: Obj._value = ECVItem.GetValue<ulong>(); break;
-                    case SecsFormat.U1: Obj._value = ECVItem.GetValue<byte>(); break;
-                    case SecsFormat.U2: Obj._value = ECVItem.GetValue<ushort>(); break;
-                    case SecsFormat.U4: Obj._value = ECVItem.GetValue<uint>(); break;
-                    case SecsFormat.F4: Obj._value = ECVItem.GetValue<float>(); break;
-                    case SecsFormat.F8: Obj._value = ECVItem.GetValue<double>(); break;
-                    case SecsFormat.ASCII: Obj._value = ECVItem.GetString(); break;
-                    case SecsFormat.JIS8: Obj._value = ECVItem.GetString(); break;
-                    case SecsFormat.Boolean: Obj._value = ECVItem.GetValue<bool>(); break;
-                    case SecsFormat.Binary: Obj._value = ECVItem.GetValues<byte>(); break;
+                    case SecsFormat.I1:
+                        SetECByID(Obj._id, ECVItem.GetValue<sbyte>());
+                        break;
+
+                    case SecsFormat.I2:
+                        SetECByID(Obj._id, ECVItem.GetValue<short>());
+                        break;
+
+                    case SecsFormat.I4:
+                        SetECByID(Obj._id, ECVItem.GetValue<int>());
+                        break;
+
+                    case SecsFormat.I8:
+                        SetECByID(Obj._id, ECVItem.GetValue<long>());
+                        break;
+
+                    case SecsFormat.U8:
+                        SetECByID(Obj._id, ECVItem.GetValue<ulong>());
+                        break;
+
+                    case SecsFormat.U1:
+                        SetECByID(Obj._id, ECVItem.GetValue<byte>());
+                        break;
+
+                    case SecsFormat.U2:
+                        SetECByID(Obj._id, ECVItem.GetValue<ushort>());
+                        break;
+
+                    case SecsFormat.U4:
+                        SetECByID(Obj._id, ECVItem.GetValue<uint>());
+                        break;
+
+                    case SecsFormat.F4:
+                        SetECByID(Obj._id, ECVItem.GetValue<float>());
+                        break;
+
+                    case SecsFormat.F8:
+                        SetECByID(Obj._id, ECVItem.GetValue<double>());
+                        break;
+
+                    case SecsFormat.ASCII:
+                        SetECByID(Obj._id, ECVItem.GetString());
+                        break;
+
+                    case SecsFormat.JIS8:
+                        SetECByID(Obj._id, ECVItem.GetString());
+                        break;
+
+                    case SecsFormat.Boolean:
+                        SetECByID(Obj._id, ECVItem.GetValue<bool>());
+                        break;
+
+                    case SecsFormat.Binary:
+                        SetECByID(Obj._id, ECVItem.GetValues<byte>());
+                        break;
                 }
             }
            
@@ -174,7 +215,6 @@ namespace SanwaSecsDll
                 case SecsFormat.U4: ecid = item.GetValue<uint>().ToString(); break;
             }
             _ecIDList.TryGetValue(ecid, out SanwaEC Obj);
-            //SanwaEC Obj = _ecList.FirstOrDefault(x => x.Value._id == ecid).Value;
             return Obj;
         }
        

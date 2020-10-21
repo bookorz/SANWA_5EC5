@@ -3,15 +3,30 @@ using System.ComponentModel;
 using System.Collections;
 using System.Collections.Generic;
 using System.Net;
+using System.IO;
 //using System.Net.Sockets;
 using System.Threading.Tasks;
 using System.Linq;
 using System.Windows;
 //using System.Messaging;
 //using Secs4Net;
+using System.Text.Json;
+
+using System.Configuration;
 
 namespace SanwaSecsDll
 {
+    public class SanwaStrFunSetting
+    {
+        public string Name { get; set; }
+        public bool Enabled { get; set; }
+        public bool Overwrite { get; set; }
+
+        public string Text { get; set; }
+
+        public string ReplyText { get; set; }
+    }
+
     public class SanwaSecs
     {
         public SecsGem _secsGem;
@@ -25,26 +40,29 @@ namespace SanwaSecsDll
         public ISecsGemLogger _logger;
 
         //轉換sml檔案
-        public SecsMessageList _secsMessages;
+        //public SecsMessageList _secsMessages;
 
         public SanwaBaseExec _baseExec;
+
+        public SanwaSMLManager _smlManager = new SanwaSMLManager();
 
         public string eqpSVFileName = null;
         public string eqpEventFileName = null;
         public string eqpECFileName = null;
         public string eqpAlarmFileName = null;
         public string eqpDVFileName = null;
+        public string messageFileName = null;
 
-        public Dictionary<string, SanwaSV> _svList = new Dictionary<string, SanwaSV>();        //search by Name 
+        private Dictionary<string, SanwaSV> _svList = new Dictionary<string, SanwaSV>();        //search by Name 
         private Dictionary<string, SanwaSV> _svIDList = new Dictionary<string, SanwaSV>();       //search by ID   
 
-        public Dictionary<string, SanwaEC> _ecList = new Dictionary<string, SanwaEC>();         //search by Name 
+        private Dictionary<string, SanwaEC> _ecList = new Dictionary<string, SanwaEC>();         //search by Name 
         private Dictionary<string, SanwaEC> _ecIDList = new Dictionary<string, SanwaEC>();       //search by ID 
 
         public Dictionary<string, SanwaAlarm> _alarmList = new Dictionary<string, SanwaAlarm>();    //search by Name 
         private Dictionary<string, SanwaAlarm> _alarmIDList = new Dictionary<string, SanwaAlarm>();  //search by ID 
 
-        public Dictionary<string, SanwaDV> _dvList = new Dictionary<string, SanwaDV>();
+        private Dictionary<string, SanwaDV> _dvList = new Dictionary<string, SanwaDV>();
         private Dictionary<string, SanwaDV> _dvIDList = new Dictionary<string, SanwaDV>();
 
         public Dictionary<string, SanwaEvent> _eventList = new Dictionary<string, SanwaEvent>();
@@ -59,6 +77,9 @@ namespace SanwaSecsDll
         public Dictionary<string, LoadPortGroup> _loadPortGroupList = new Dictionary<string, LoadPortGroup>();
         
         public Dictionary<string, SanwaCarrier> _carrierList = new Dictionary<string, SanwaCarrier>();
+
+        private Dictionary<string, SanwaStrFunSetting> _strFunList = new Dictionary<string, SanwaStrFunSetting>();
+
 
         //
         //public BindingList<PrimaryMessageWrapper> recvBuffer = new BindingList<PrimaryMessageWrapper>();
@@ -80,6 +101,11 @@ namespace SanwaSecsDll
             PrimaryMessageReceivedEvent?.Invoke(this, e);
         }
         public event EventHandler<CONTROL_STATE> ChangeControlStateEvent;
+
+        /// <summary>
+        /// 在OFFLine的請況下收到Event
+        /// </summary>
+        public event EventHandler<PrimaryMessageWrapper> ReceiveInOffLineEvent;
 
         public event EventHandler<E87_HostCommand> S3F17BindEvent;
         public event EventHandler<E87_HostCommand> S3F17CancelBindEvent;
@@ -125,6 +151,8 @@ namespace SanwaSecsDll
         //Device ID
         public int DeviceId;
 
+
+
         //連線狀態
         public ConnectionState State { get { return _secsGem.State; }}
         //S1F1
@@ -132,18 +160,20 @@ namespace SanwaSecsDll
                 get =>_baseExec?._mdln;
                 set {
                         if (_baseExec != null) _baseExec._mdln = value;
-                        _svList.TryGetValue(SVName.GEM_MDLN, out SanwaSV svObj);
-                        svObj._value = value;
 
-                }
+                        SetSV(SVName.GEM_MDLN, value);
+                        //_svList.TryGetValue(SVName.GEM_MDLN, out SanwaSV svObj);
+                        //svObj._value = value;
+            }
         }
         public string strSOFTREV
         {
             get => _baseExec?._softRev;
             set {
                     if (_baseExec != null) _baseExec._softRev = value;
-                    _svList.TryGetValue(SVName.GEM_SOFTREV, out SanwaSV svObj);
-                    svObj._value = value;
+                    SetSV(SVName.GEM_SOFTREV, value);
+                //_svList.TryGetValue(SVName.GEM_SOFTREV, out SanwaSV svObj);
+                //svObj._value = value;
             }
         }
         public CONTROL_STATE _currentState
@@ -202,10 +232,11 @@ namespace SanwaSecsDll
             DecoderBufferSize = 65535;
             DeviceId = 0;
             _logger = null;
-            _secsMessages = null;
+            //_secsMessages = null;
             _baseExec = null;
 
-            //_baseExec = new SanwaBaseExec(_secsMessages);
+            messageFileName = "SecsMessage.json";
+
         }
         public SanwaSecs(bool isActive, string ip, int port, 
             int receiveBufferSize = 0x4000, ISecsGemLogger logger = null, SecsMessageList secsMessages = null)
@@ -218,17 +249,18 @@ namespace SanwaSecsDll
             DecoderBufferSize = receiveBufferSize;
             DeviceId = 0;
             _logger = logger;
-            _secsMessages = secsMessages;
+            //_secsMessages = secsMessages;
             _baseExec = null;
 
             //_baseExec = new SanwaBaseExec(_secsMessages);
+            messageFileName = "SecsMessage.json";
         }
 
         public void Initialize()
         {
             if (_baseExec == null)
             {
-                _baseExec = new SanwaBaseExec(_secsMessages)
+                _baseExec = new SanwaBaseExec()
                 {
                     _svList = _svList,
                     _svIDList = _svIDList,
@@ -248,10 +280,22 @@ namespace SanwaSecsDll
 
                     _carrierList = _carrierList,
 
-                    _logger = _logger
+                    _strFunList = _strFunList,
+
+                    _logger = _logger,
+
+                    _smlManager = _smlManager
                 };
 
+
+                List<SanwaStrFunSetting>  tempStrFunList = new ConfigTool<List<SanwaStrFunSetting>>().ReadFile(messageFileName);
+
+                foreach (SanwaStrFunSetting obj in tempStrFunList)
+                    _strFunList.Add(obj.Name, obj);
+
                 _baseExec.ChangeControlStateEvent += ChangeControlStateEvent;
+
+                _baseExec.ReceiveInOffLineEvent += ReceiveInOffLineEvent;
 
                 _baseExec.S3F17BindEvent += S3F17BindEvent;
                 _baseExec.S3F17CancelBindEvent+= S3F17CancelBindEvent;
@@ -300,6 +344,17 @@ namespace SanwaSecsDll
                     if ("1"== ecObj._value.ToString())
                         Connect();
                 }
+            }
+        }
+        public void ReadSMLFile(string filepath)
+        {
+            try
+            {
+                _smlManager.ReadFile(filepath);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error("SanwaSecs_ReadSMLFile:" + ex.Message);
             }
         }
         public void Connect()
@@ -386,12 +441,12 @@ namespace SanwaSecsDll
                 await S6F11Async(EventName.GEM_EQP_OFF_LINE);
 
                 PROCESS_MSG_RESULT lResult = PROCESS_MSG_RESULT.PROCESS_FINISH;     //搭配Function無實質意義
-                SecsMessage s6f11format = _secsMessages[6, 11].FirstOrDefault();    //搭配Function無實質意義
-
+                //SecsMessage s6f11format = _secsMessages[6, 11].FirstOrDefault();    //搭配Function無實質意義
+                //SecsMessage secsMessage = new SecsMessage(6, 11, "Event Report Send(ERS)");
                 //切換狀態機
-                _baseExec.ChangeControlState(CONTROL_STATE.EQUIPMENT_OFF_LINE,null, s6f11format,ref lResult);
+                _baseExec.ChangeControlState(CONTROL_STATE.EQUIPMENT_OFF_LINE,null, null, ref lResult);
 
-                SetEV(ECName.GEM_INIT_CONTROL_STATE, 1);
+                //SetEC(ECName.GEM_INIT_CONTROL_STATE, 1);
             }
 
         }
@@ -403,20 +458,20 @@ namespace SanwaSecsDll
             if (_currentState != CONTROL_STATE.EQUIPMENT_OFF_LINE)
                 return;
 
-
-            SecsMessage s1f1format = _secsMessages[1, 1].FirstOrDefault();
+            SecsMessage secsMessage = new SecsMessage(1, 1, "Are You There Request (R)");
+            //SecsMessage s1f1format = _secsMessages[1, 1].FirstOrDefault();
             PROCESS_MSG_RESULT lResult = PROCESS_MSG_RESULT.PROCESS_FINISH;
 
-            if (s1f1format == null)
+            if (secsMessage == null)
             {
                 _logger.Error("ChangeToOnLineState s1f1format error");
                 return;
             }
 
-            _baseExec.ChangeControlState(CONTROL_STATE.ATTEMPT_ON_LINE, null, s1f1format, ref lResult);
+            _baseExec.ChangeControlState(CONTROL_STATE.ATTEMPT_ON_LINE, null, secsMessage, ref lResult);
 
-            var s1f1 = new SecsMessage(1,1, s1f1format.Name);
-            var s1f2 = await _secsGem.SendAsync(s1f1);
+            //var s1f1 = new SecsMessage(1,1, s1f1format.Name);
+            var s1f2 = await _secsGem.SendAsync(secsMessage);
 
             if (s1f2 == null)
             {
@@ -427,15 +482,15 @@ namespace SanwaSecsDll
             if (s1f2.F != 2)
             {
                 lResult = PROCESS_MSG_RESULT.PROCESS_FINISH;     //搭配Function無實質意義
-                SecsMessage s6f11format = _secsMessages[6, 11].FirstOrDefault();    //搭配Function無實質意義
-
-                if(s6f11format != null)
-                { 
+                //SecsMessage s6f11format = _secsMessages[6, 11].FirstOrDefault();    //搭配Function無實質意義
+                //SecsMessage s6f11format = new SecsMessage(6, 11, "Event Report Send(ERS)");
+                //if (s6f11format != null)
+               // { 
                     //切換狀態機
-                    _baseExec.ChangeControlState(CONTROL_STATE.EQUIPMENT_OFF_LINE, null, s6f11format, ref lResult);
+                    _baseExec.ChangeControlState(CONTROL_STATE.EQUIPMENT_OFF_LINE, null, null, ref lResult);
 
                     await S6F11Async(EventName.GEM_EQP_OFF_LINE);
-                }
+               // }
                 return;
             }
             else
@@ -448,24 +503,24 @@ namespace SanwaSecsDll
                 else
                 {
                     lResult = PROCESS_MSG_RESULT.PROCESS_FINISH;     //搭配Function無實質意義
-                    SecsMessage s6f11format = _secsMessages[6, 11].FirstOrDefault();    //搭配Function無實質意義
-
-                    if (s6f11format != null)
-                    {
+                    //SecsMessage s6f11format = _secsMessages[6, 11].FirstOrDefault();    //搭配Function無實質意義
+                    //SecsMessage s6f11format = new SecsMessage(6, 11, "Event Report Send(ERS)");
+                    //if (s6f11format != null)
+                   // {
                         //Host On-line 需求 4:On-line/Local, 5:ON-line/Remote
                         if ("4" == sanwaEC._defaultValue.ToString())
                         {
-                            _baseExec.ChangeControlState(CONTROL_STATE.ON_LINE_LOCAL, null, s6f11format, ref lResult);
+                            _baseExec.ChangeControlState(CONTROL_STATE.ON_LINE_LOCAL, null, null, ref lResult);
                             await S6F11Async(EventName.GEM_CONTROL_STATE_LOCAL);
                         }
                         else if ("5" == sanwaEC._defaultValue.ToString())
                         {
-                            _baseExec.ChangeControlState(CONTROL_STATE.ON_LINE_REMOTE, null, s6f11format, ref lResult);
+                            _baseExec.ChangeControlState(CONTROL_STATE.ON_LINE_REMOTE, null, null, ref lResult);
                             await S6F11Async(EventName.GEM_CONTROL_STATE_REMOTE);
                         }
 
-                        SetEV(ECName.GEM_INIT_CONTROL_STATE, 2);
-                    }
+                        //SetEC(ECName.GEM_INIT_CONTROL_STATE, 2);
+                    //}
                 }
             }
         }
@@ -478,13 +533,14 @@ namespace SanwaSecsDll
                 return;
 
             PROCESS_MSG_RESULT lResult = PROCESS_MSG_RESULT.PROCESS_FINISH;     //搭配Function無實質意義
-            SecsMessage s6f11format = _secsMessages[6, 11].FirstOrDefault();    //搭配Function無實質意義
+            SecsMessage s6f11format = new SecsMessage(6, 11, "Event Report Send(ERS)");
+            //SecsMessage s6f11format = _secsMessages[6, 11].FirstOrDefault();    //搭配Function無實質意義
             if (s6f11format != null)
             {
                 _baseExec.ChangeControlState(CONTROL_STATE.ON_LINE_LOCAL, null, s6f11format, ref lResult);
                 await S6F11Async(EventName.GEM_CONTROL_STATE_LOCAL);
 
-                SetEV(ECName.GEM_INIT_CONTROL_STATE, 2);
+                //SetEC(ECName.GEM_INIT_CONTROL_STATE, 2);
             }
             else
             {
@@ -500,13 +556,14 @@ namespace SanwaSecsDll
                 return;
 
             PROCESS_MSG_RESULT lResult = PROCESS_MSG_RESULT.PROCESS_FINISH;     //搭配Function無實質意義
-            SecsMessage s6f11format = _secsMessages[6, 11].FirstOrDefault();    //搭配Function無實質意義
+            SecsMessage s6f11format = new SecsMessage(6, 11, "Event Report Send(ERS)");
+            //SecsMessage s6f11format = _secsMessages[6, 11].FirstOrDefault();    //搭配Function無實質意義
             if (s6f11format != null)
             {
                 _baseExec.ChangeControlState(CONTROL_STATE.ON_LINE_REMOTE, null, s6f11format, ref lResult);
                 await S6F11Async(EventName.GEM_CONTROL_STATE_REMOTE);
 
-                SetEV(ECName.GEM_INIT_CONTROL_STATE, 2);
+                //SetEC(ECName.GEM_INIT_CONTROL_STATE, 2);
             }
             else
             {
@@ -520,8 +577,37 @@ namespace SanwaSecsDll
 
             try
             {
-                var s1f1 = _secsMessages[1,1].FirstOrDefault();
-                var s1f2 = await _secsGem.SendAsync(s1f1);
+                _smlManager._messageList.TryGetValue("S1F1", out SanwaSML smlObj);
+
+                SecsMessage s1f1 = new SecsMessage(1, 1, smlObj.MessageName);
+                string ReplyMSG = _baseExec.GetMessageName(s1f1.ToSml());
+                string line;
+                using (StringReader reader = new StringReader(smlObj.Text))
+                {
+                    while ((line = reader.ReadLine()) != null)
+                    {
+                        if (line.Contains("\'"))
+                        {
+                            if (line.Contains("MDLN"))
+                            {
+                                GetSVData(SVName.GEM_MDLN, out SanwaSV mdlnSV);
+                                ReplyMSG += "<A[0]" + mdlnSV._value + ">\r\n";
+                            }
+                            else if (line.Contains("SOFTREV"))
+                            {
+                                GetSVData(SVName.GEM_SOFTREV, out SanwaSV softrevSV);
+                                ReplyMSG += "<A[0]" + softrevSV._value + ">\r\n";
+                            }
+                        }
+                        else
+                        {
+                            ReplyMSG += line;
+                            ReplyMSG += "\r\n";
+                        }
+                    }
+                }
+
+                SecsMessage s1f2 = await _secsGem.SendAsync(ReplyMSG.ToSecsMessage());
             }
             catch (Exception ex)
             {
@@ -535,32 +621,39 @@ namespace SanwaSecsDll
 
             try
             {
-                SecsMessage s1f13, s1f13format;
-                //根據SML的名稱(決定是Host或者是Client)
-                s1f13format = IsActiveMode ? _secsMessages[1, 13, "CR"] : _secsMessages[1, 13, "CR_Host"];
+                _smlManager._messageList.TryGetValue("S1F13",out SanwaSML smlObj);
 
-                s1f13 = new SecsMessage(s1f13format.S, s1f13format.F, s1f13format.Name);
-                if (IsActiveMode)
+
+                SecsMessage s1f13 = new SecsMessage(1, 13, smlObj.MessageName);
+                string ReplyMSG = _baseExec.GetMessageName(s1f13.ToSml());
+                string line;
+                using (StringReader reader = new StringReader(smlObj.Text))
                 {
-                    s1f13 = s1f13format.ToSml().ToSecsMessage();
-
-                    foreach (var id in s1f13.SecsItem.Items)
+                    while ((line = reader.ReadLine()) != null)
                     {
-                        if (id.Format == SecsFormat.ASCII)
+                        if (line.Contains("\'"))
                         {
-                            if (id.GetString().Equals("MDLN"))
+                            if (line.Contains("MDLN"))
                             {
-                                id.SetString(strMDLN);
+                                GetSVData(SVName.GEM_MDLN, out SanwaSV mdlnSV);
+                                ReplyMSG += "<A[0]" + mdlnSV._value + ">\r\n";
                             }
-                            else if (id.GetString().Equals("SOFTREV"))
+                            else if (line.Contains("SOFTREV"))
                             {
-                                id.SetString(strSOFTREV);
+                                GetSVData(SVName.GEM_SOFTREV, out SanwaSV softrevSV);
+                                ReplyMSG += "<A[0]" + softrevSV._value + ">\r\n";
                             }
                         }
+                        else
+                        {
+                            ReplyMSG += line;
+                            ReplyMSG += "\r\n";
+                        }
+
                     }
                 }
 
-                SecsMessage s1f14 = await _secsGem.SendAsync(s1f13);
+                SecsMessage s1f14 = await _secsGem.SendAsync(ReplyMSG.ToSecsMessage());
             }
             catch (Exception ex)
             {
@@ -572,73 +665,10 @@ namespace SanwaSecsDll
             if (_baseExec == null) return;
             if (!CheckConnectState()) return;
 
-            SecsMessage s2f17format = _secsMessages[2, 17].FirstOrDefault();
-
+            SecsMessage s2f17format = new SecsMessage(2, 17, "Date and Time Request (DTR)");
             _secsGem.SendAsync(s2f17format);
 
             SetSV(SVName.GEM_CLOCK, _baseExec.GetDateTime());
-        }
-        private async Task SendEventReportAsync(string eventName, bool annotated)
-        {
-            if (_baseExec == null) return;
-            if (!CheckConnectState()) return;
-
-            _eventList.TryGetValue(eventName, out SanwaEvent sanwaEvent);
-            if (sanwaEvent == null) return;
-            if (!sanwaEvent._enabled) return;
-
-            _ecList.TryGetValue(ECName.GEM_DATAID_FORMAT, out SanwaEC sanwaEC);
-            if (sanwaEC == null) return;
-
-            _svList.TryGetValue(SVName.GEM_PREVIOUS_CEID, out SanwaSV sanwaSV);
-            if(sanwaSV != null)
-                SetSV(SVName.GEM_PREVIOUS_CEID, sanwaSV._id);
-
-            //Data 累加
-            _dataID = _dataID + 1;
-
-            SanwaEC ecObj;
-
-            SecsMessage s6f11format = _secsMessages[6, 11].FirstOrDefault();
-
-            string ReplyMSG = _baseExec.GetMessageName(s6f11format.ToSml());
-
-            ReplyMSG += "< L[3]\r\n";
-            switch (sanwaEC._value.ToString())
-            {
-                case "1":
-                    ReplyMSG += _baseExec.GetTypeStringValue(SecsFormat.I1, (sbyte)_dataID);
-                    break;
-                case "2":
-                    ReplyMSG += _baseExec.GetTypeStringValue(SecsFormat.I2, (short)_dataID);
-                    break;
-                case "3":
-                    ReplyMSG += _baseExec.GetTypeStringValue(SecsFormat.I4, (int)_dataID);
-                    break;
-                case "4":
-                    ReplyMSG += _baseExec.GetTypeStringValue(SecsFormat.U1, (byte)_dataID);
-                    break;
-                case "5":
-                    ReplyMSG += _baseExec.GetTypeStringValue(SecsFormat.U2, (ushort)_dataID);
-                    break;
-                case "6":
-                    ReplyMSG += _baseExec.GetTypeStringValue(SecsFormat.U4, (uint)_dataID);
-                    break;
-            }
-
-            //目前暫定所有的CEID為"U4"
-            ReplyMSG += "<U4[0] " + sanwaEvent._id.ToString() + ">\r\n";
-            ReplyMSG += _baseExec.GetEventReportSML(sanwaEvent, annotated);
-            //RPTList end
-            ReplyMSG += ">\r\n";
-
-
-            SecsMessage replyMSG = ReplyMSG.ToSecsMessage();
-            //GEM_WBIT_S6
-            _ecList.TryGetValue(ECName.GEM_WBIT_S6, out ecObj);
-                replyMSG.ReplyExpected = "1" == ecObj._value.ToString() ? true : false;
-
-            _secsGem.SendAsync(replyMSG);
         }
         /// <summary>
         /// 發送Event(不包含Event ID)
@@ -647,7 +677,7 @@ namespace SanwaSecsDll
         /// <returns></returns>
         public async Task S6F11Async(string eventName)
         {
-            SendEventReportAsync(eventName, false);
+            _baseExec.SendEventReportAsync(eventName, false);
         }
         /// <summary>
         /// 發送Event(包含Event ID)
@@ -656,7 +686,7 @@ namespace SanwaSecsDll
         /// <returns></returns>
         public async Task S6F13Async(string eventName)
         {
-            SendEventReportAsync(eventName, true);
+            _baseExec.SendEventReportAsync(eventName, true);
         }
         public async Task S5F1SetAlarmReport(string alarmName, bool set, int alarmMode = 0)
         {
@@ -687,8 +717,8 @@ namespace SanwaSecsDll
                     wBIT = true; 
             }
 
-            SecsMessage s5f1format = _secsMessages[5, 1].FirstOrDefault();
-            var s5f1 = new SecsMessage(5, 1, s5f1format.Name,
+            //SecsMessage s5f1format = _secsMessages[5, 1].FirstOrDefault();
+            var s5f1 = new SecsMessage(5, 1, "Alarm Report Send (ARS)",
                     Item.L(setItem,
                     Item.U4(Convert.ToUInt32(sanwaAlarm._id)),
                     Item.A(sanwaAlarm._text)), 
@@ -705,7 +735,7 @@ namespace SanwaSecsDll
             if (_baseExec == null) return;
             if (!CheckConnectState()) return;
 
-            SecsMessage s10f1format = _secsMessages[10, 1].FirstOrDefault();
+            //SecsMessage s10f1format = _secsMessages[10, 1].FirstOrDefault();
 
             //GEM_WBIT_S10
             bool wBIT = false;
@@ -716,7 +746,7 @@ namespace SanwaSecsDll
                     wBIT = true; 
             }
 
-            var s10f1 = new SecsMessage(10, 1, s10f1format.Name,
+            var s10f1 = new SecsMessage(10, 1, "Terminal Request Acknowledge (TRA)",
                         Item.L(Item.B(0x00),
                         Item.A(terminalText)),
                         wBIT);
@@ -814,7 +844,16 @@ namespace SanwaSecsDll
         /// <returns></returns>
         public SanwaSV SetSV(string name, object value)
         {
+            if (_baseExec == null) return null;
             return _baseExec.SetSV(name, value);
+        }
+
+        public SanwaSV SetSVByID(string id, object value)
+        {
+            if (_baseExec == null) return null;
+            _svIDList.TryGetValue(id, out SanwaSV sanwaSV);
+
+            return _baseExec.SetSV(sanwaSV._name, value);
         }
         /// <summary>
         /// SV相關流程:取得SV Object
@@ -824,6 +863,11 @@ namespace SanwaSecsDll
         public void GetSVData(string name, out SanwaSV SVData)
         {
             _baseExec.GetSVData(name, out SVData);
+        }
+        public void GetSVDataByID(string id, out SanwaSV SVData)
+        {
+            //if (_baseExec == null) return null;
+            _svIDList.TryGetValue(id, out SVData);
         }
         /// <summary>
         /// SV相關流程:初始化System SV
@@ -855,98 +899,37 @@ namespace SanwaSecsDll
         /// <param name="name"></param>
         /// <param name="value"></param>
         /// <returns></returns>
-        public SanwaEC SetEV(string name, object value)
+        public SanwaEC SetEC(string name, object value)
         {
-            GetEVData(name, out SanwaEC obj);
-            if (obj != null)
-            {
-                SetDV(DVName.GEM_PREVIOUS_EC_VALUE, obj._value);
+            if (_baseExec == null) return null;
+            return _baseExec.SetEC(name, value);
+        }
+        public SanwaEC SetECByID(string id, object value)
+        {
+            if (_baseExec == null) return null;
+            _ecIDList.TryGetValue(id, out SanwaEC sanwaEC);
 
-                switch (obj._type)
-                {
-                    case SecsFormat.ASCII: obj._value = value.ToString(); break;
-                    case SecsFormat.Boolean: obj._value = Convert.ToBoolean(value); break;
-                    case SecsFormat.Binary:
-                        var enumerable = value as IEnumerable<byte>;
-                        obj._value = enumerable;
-                        break;
-                    case SecsFormat.F4:
-                        if(!(Convert.ToSingle(value) - Convert.ToSingle(obj._maxValue) > 0.0 ||
-                            Convert.ToSingle(value) - Convert.ToSingle(obj._minValue) < 0.0))
-                            obj._value = Convert.ToSingle(value);
-                        break;
-                    case SecsFormat.F8:
-                        if (!(Convert.ToDouble(value) - Convert.ToDouble(obj._maxValue) > 0.0 ||
-                            Convert.ToDouble(value) - Convert.ToDouble(obj._minValue) < 0.0))
-                            obj._value = Convert.ToDouble(value);
-                        break;
-                    case SecsFormat.I1:
-                        if (!(Convert.ToSByte(value) > Convert.ToSByte(obj._maxValue) ||
-                            Convert.ToSByte(value) < Convert.ToSByte(obj._minValue) ))
-                            obj._value = Convert.ToSByte(value);
-                        break;
-                    case SecsFormat.I2:
-                        if (!(Convert.ToInt16(value) > Convert.ToInt16(obj._maxValue) ||
-                            Convert.ToInt16(value) < Convert.ToInt16(obj._minValue)))
-                            obj._value = Convert.ToInt16(value);
-                        break;
-                    case SecsFormat.I4:
-                        if (!(Convert.ToInt32(value) > Convert.ToInt32(obj._maxValue) ||
-                            Convert.ToInt32(value) < Convert.ToInt32(obj._minValue)))
-                            obj._value = Convert.ToInt32(value);
-                        break;
-                    case SecsFormat.I8:
-                        if (!(Convert.ToInt64(value) > Convert.ToInt64(obj._maxValue) ||
-                            Convert.ToInt64(value) < Convert.ToInt64(obj._minValue)))
-                            obj._value = Convert.ToInt64(value);
-                        break;
-                    case SecsFormat.JIS8: obj._value = value.ToString(); break;
-                    case SecsFormat.U1:
-                        if (!(Convert.ToByte(value) > Convert.ToByte(obj._maxValue) ||
-                            Convert.ToByte(value) < Convert.ToByte(obj._minValue)))
-                            obj._value = Convert.ToByte(value);
-                        break;
-                    case SecsFormat.U2:
-                        if (!(Convert.ToUInt16(value) > Convert.ToUInt16(obj._maxValue) ||
-                            Convert.ToUInt16(value) < Convert.ToUInt16(obj._minValue)))
-                            obj._value = Convert.ToUInt16(value);
-                        break;
-                    case SecsFormat.U4:
-                        if (!(Convert.ToUInt32(value) > Convert.ToUInt32(obj._maxValue) ||
-                            Convert.ToUInt32(value) < Convert.ToUInt32(obj._minValue)))
-                            obj._value = Convert.ToUInt32(value);
-                        break;
-                    case SecsFormat.U8:
-                        if (!(Convert.ToUInt64(value) > Convert.ToUInt64(obj._maxValue) ||
-                            Convert.ToUInt64(value) < Convert.ToUInt64(obj._minValue)))
-                            obj._value = Convert.ToUInt64(value);
-                        break;
-                }
-
-                //if(obj._value == value)
-                S6F11Async(EventName.GEM_EQ_CONST_CHANGED);
-
-                SetDV(DVName.GEM_DV_ECID_CHANGED, obj._id);
-                SetDV(DVName.GEM_DV_EC_VALUE_CHANGED, obj._value);
-            }
-
-            return obj;
+            return _baseExec.SetEC(sanwaEC._name, value);
+        }
+        public void GetECDataByID(string id, out SanwaEC sanwaEC)
+        {
+            //if (_baseExec == null) return null;
+            _ecIDList.TryGetValue(id, out sanwaEC);
         }
         /// <summary>
         /// EC相關流程:取得EC Object
         /// </summary>
         /// <param name="name"></param>
         /// <param name="SVData"></param>
-        public void GetEVData(string name, out SanwaEC SVData)
+        public void GetECData(string name, out SanwaEC ECData)
         {
             if (_baseExec != null)
             {
-                _ecList.TryGetValue(name, out SanwaEC obj);
-                SVData = obj;
+                _baseExec.GetECData(name, out ECData);
             }
             else
             {
-                SVData = null;
+                ECData = null;
             }
         }
         private void LoadECCSVFile(string filePath)
@@ -1253,33 +1236,15 @@ namespace SanwaSecsDll
         /// <param name="DVData"></param>
         public SanwaDV SetDV(string name, object value)
         {
-            GetDVData(name, out SanwaDV obj);
+            if (_baseExec == null) return null;
+            return _baseExec.SetDV(name, value);
+        }
+        public SanwaDV SetDVByID(string id, object value)
+        {
+            if (_baseExec == null) return null;
+            _dvIDList.TryGetValue(id, out SanwaDV sanwaDV);
 
-            if (obj != null)
-            {
-                switch (obj._format)
-                {
-                    case SecsFormat.ASCII: obj._value = value.ToString(); break;
-                    case SecsFormat.Binary:
-                        var enumerable = value as IEnumerable<byte>;
-                        obj._value = enumerable;
-                        break;
-                    case SecsFormat.Boolean: obj._value = Convert.ToBoolean(value); break;
-                    case SecsFormat.F4: obj._value = Convert.ToSingle(value); break;
-                    case SecsFormat.F8: obj._value = Convert.ToDouble(value); break;
-                    case SecsFormat.I1: obj._value = Convert.ToSByte(value); break;
-                    case SecsFormat.I2: obj._value = Convert.ToInt16(value); break;
-                    case SecsFormat.I4: obj._value = Convert.ToInt32(value); break;
-                    case SecsFormat.I8: obj._value = Convert.ToInt64(value); break;
-                    case SecsFormat.JIS8: obj._value = value.ToString(); break;
-                    case SecsFormat.U1: obj._value = Convert.ToByte(value); break;
-                    case SecsFormat.U2: obj._value = Convert.ToUInt16(value); break;
-                    case SecsFormat.U4: obj._value = Convert.ToUInt32(value); break;
-                    case SecsFormat.U8: obj._value = Convert.ToUInt64(value); break;
-                }
-            }
-
-            return obj;
+            return _baseExec.SetDV(sanwaDV._name, value);
         }
         /// <summary>
         /// DV流程:取得DV Object
@@ -1290,14 +1255,18 @@ namespace SanwaSecsDll
         {
             if (_baseExec != null)
             {
-                _dvList.TryGetValue(name, out SanwaDV obj);
-                DVData = obj;
+                _baseExec.GetDVData(name, out DVData);
             }
             else
             {
                 DVData = null;
             }
         }
+        public void GetDVDataByID(string id, out SanwaDV DVData)
+        {
+            _dvIDList.TryGetValue(id, out DVData);
+        }
+
         /// <summary>
         /// DV流程:讀取DV csv檔
         /// </summary>
@@ -1394,22 +1363,7 @@ namespace SanwaSecsDll
         {
             return _baseExec.CheckFomart3x5x20(item);
         }
-        public string GetSMLName(int s, int f)
-        {
-            string strRet = "";
-            try
-            {
 
-                SecsMessage secsMSG = _secsMessages[(byte)s, (byte)f].FirstOrDefault();
-                strRet = _baseExec.GetMessageName(secsMSG.ToSml());
-            }
-            catch (Exception e)
-            {
-                _logger.Error("SanwaSecs_GetSMLName:" + e.Message);
-            }
-
-            return strRet;
-        }
         public void ReplyUnrecognizedStreamType(PrimaryMessageWrapper e)
         {
             _baseExec.ReplyUnrecognizedStreamType(e);
@@ -1421,6 +1375,11 @@ namespace SanwaSecsDll
         public void ReplyIllegalData(PrimaryMessageWrapper e)
         {
             _baseExec.ReplyIllegalData(e);
+        }
+
+        public string GetMessageName(string Message)
+        {
+            return _baseExec.GetMessageName(Message);
         }
 
     }

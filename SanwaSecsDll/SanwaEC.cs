@@ -19,7 +19,7 @@ namespace SanwaSecsDll
         public string _remark;
     }
 
-    static class ECName
+    public static class ECName
     {
         /// <summary>
         /// 0:Disable, 1:Enable

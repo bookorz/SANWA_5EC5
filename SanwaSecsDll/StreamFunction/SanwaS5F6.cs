@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
+using System.IO;
 
 namespace SanwaSecsDll
 {
@@ -29,9 +30,34 @@ namespace SanwaSecsDll
         {
             foreach (var AlarmIDObj in alarmIDList)
             {
+                //解碼 ALCD、ALID、ALTX
+                _smlManager._messageList.TryGetValue("S5F6", out SanwaSML smlObj);
+
+                List<string> requestList = new List<string>();
+                using (StringReader reader = new StringReader(smlObj.Text))
+                {
+                    string line;
+                    while ((line = reader.ReadLine()) != null)
+                    {
+                        if (line.Contains("ALCD"))
+                        {
+                            requestList.Add("ALCD");
+                        }
+                        else if (line.Contains("ALID"))
+                        {
+                            requestList.Add("ALID");
+                        }
+                        else if (line.Contains("ALTX"))
+                        {
+                            requestList.Add("ALTX");
+                        }
+                    }
+                }
+
+
                 alarmList.TryGetValue(AlarmIDObj.Key, out SanwaAlarm Obj);
 
-                ReplyMSG += "<L[3]\r\n";
+                ReplyMSG += "<L["+ requestList.Count + "]\r\n";
                 //ReplyMSG += "<A[0]" + iD + ">\r\n";
 
                 if (Obj == null)

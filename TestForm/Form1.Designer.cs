@@ -36,11 +36,7 @@
             this.lbConnectStateChange = new System.Windows.Forms.Label();
             this.richTextBox1 = new System.Windows.Forms.RichTextBox();
             this.btnS1F1 = new System.Windows.Forms.Button();
-            this.listboxSmlFile = new System.Windows.Forms.ListBox();
             this.pnLeftFrame = new System.Windows.Forms.Panel();
-            this.lbShowSMLFile = new System.Windows.Forms.Label();
-            this.tbShowSML = new System.Windows.Forms.TextBox();
-            this.btnSent = new System.Windows.Forms.Button();
             this.edMDLN = new System.Windows.Forms.TextBox();
             this.lbMDLN = new System.Windows.Forms.Label();
             this.lbSOFTREV = new System.Windows.Forms.Label();
@@ -80,6 +76,7 @@
             this.pageCustomizeSetup = new System.Windows.Forms.TabPage();
             this.rtbCustomize = new System.Windows.Forms.RichTextBox();
             this.pageCMS = new System.Windows.Forms.TabPage();
+            this.btnE87NR3 = new System.Windows.Forms.Button();
             this.btnE87NR1 = new System.Windows.Forms.Button();
             this.btnLP2 = new System.Windows.Forms.Button();
             this.btnLP1 = new System.Windows.Forms.Button();
@@ -136,6 +133,7 @@
             this.rtxtSecondRequest = new System.Windows.Forms.RichTextBox();
             this.rtxtMainRequest = new System.Windows.Forms.RichTextBox();
             this.pageCarrierStatus = new System.Windows.Forms.TabPage();
+            this.btnIDVerifFail = new System.Windows.Forms.Button();
             this.btnSlopMapVerifOK = new System.Windows.Forms.Button();
             this.btnIDVerifOK = new System.Windows.Forms.Button();
             this.shapeContainer5 = new Microsoft.VisualBasic.PowerPacks.ShapeContainer();
@@ -161,8 +159,9 @@
             this.rectLP1 = new Microsoft.VisualBasic.PowerPacks.RectangleShape();
             this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
             this.timeUIUpdate = new System.Windows.Forms.Timer(this.components);
-            this.btnIDVerifFail = new System.Windows.Forms.Button();
-            this.btnE87NR3 = new System.Windows.Forms.Button();
+            this.btnSetS1F13 = new System.Windows.Forms.Button();
+            this.lbShowSF = new System.Windows.Forms.Label();
+            this.lbShowS3F17 = new System.Windows.Forms.Label();
             this.pnLeftFrame.SuspendLayout();
             this.tabControl1.SuspendLayout();
             this.pageGeneral.SuspendLayout();
@@ -196,7 +195,7 @@
             // 
             // btnConnect
             // 
-            this.btnConnect.Location = new System.Drawing.Point(1084, 568);
+            this.btnConnect.Location = new System.Drawing.Point(983, 623);
             this.btnConnect.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.btnConnect.Name = "btnConnect";
             this.btnConnect.Size = new System.Drawing.Size(95, 42);
@@ -219,7 +218,7 @@
             // lbConnectStateChange
             // 
             this.lbConnectStateChange.BackColor = System.Drawing.Color.Red;
-            this.lbConnectStateChange.Location = new System.Drawing.Point(983, 568);
+            this.lbConnectStateChange.Location = new System.Drawing.Point(882, 623);
             this.lbConnectStateChange.Name = "lbConnectStateChange";
             this.lbConnectStateChange.Size = new System.Drawing.Size(95, 42);
             this.lbConnectStateChange.TabIndex = 2;
@@ -227,11 +226,11 @@
             // 
             // richTextBox1
             // 
-            this.richTextBox1.Dock = System.Windows.Forms.DockStyle.Top;
+            this.richTextBox1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.richTextBox1.Font = new System.Drawing.Font("微軟正黑體", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
             this.richTextBox1.Location = new System.Drawing.Point(0, 16);
             this.richTextBox1.Name = "richTextBox1";
-            this.richTextBox1.Size = new System.Drawing.Size(386, 528);
+            this.richTextBox1.Size = new System.Drawing.Size(386, 661);
             this.richTextBox1.TabIndex = 3;
             this.richTextBox1.Text = "";
             this.richTextBox1.TextChanged += new System.EventHandler(this.richTextBox1_TextChanged);
@@ -246,22 +245,8 @@
             this.btnS1F1.UseVisualStyleBackColor = true;
             this.btnS1F1.Click += new System.EventHandler(this.btnS1F1_Click);
             // 
-            // listboxSmlFile
-            // 
-            this.listboxSmlFile.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.listboxSmlFile.FormattingEnabled = true;
-            this.listboxSmlFile.ItemHeight = 16;
-            this.listboxSmlFile.Location = new System.Drawing.Point(0, 560);
-            this.listboxSmlFile.Name = "listboxSmlFile";
-            this.listboxSmlFile.Size = new System.Drawing.Size(386, 117);
-            this.listboxSmlFile.TabIndex = 5;
-            this.listboxSmlFile.SelectedIndexChanged += new System.EventHandler(this.listboxSmlFile_SelectedIndexChanged);
-            this.listboxSmlFile.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.listboxSmlFile_MouseDoubleClick);
-            // 
             // pnLeftFrame
             // 
-            this.pnLeftFrame.Controls.Add(this.listboxSmlFile);
-            this.pnLeftFrame.Controls.Add(this.lbShowSMLFile);
             this.pnLeftFrame.Controls.Add(this.richTextBox1);
             this.pnLeftFrame.Controls.Add(this.lbShowLog);
             this.pnLeftFrame.Dock = System.Windows.Forms.DockStyle.Left;
@@ -269,36 +254,6 @@
             this.pnLeftFrame.Name = "pnLeftFrame";
             this.pnLeftFrame.Size = new System.Drawing.Size(386, 677);
             this.pnLeftFrame.TabIndex = 6;
-            // 
-            // lbShowSMLFile
-            // 
-            this.lbShowSMLFile.AutoSize = true;
-            this.lbShowSMLFile.Dock = System.Windows.Forms.DockStyle.Top;
-            this.lbShowSMLFile.Location = new System.Drawing.Point(0, 544);
-            this.lbShowSMLFile.Name = "lbShowSMLFile";
-            this.lbShowSMLFile.Size = new System.Drawing.Size(89, 16);
-            this.lbShowSMLFile.TabIndex = 4;
-            this.lbShowSMLFile.Text = "Show SML File";
-            // 
-            // tbShowSML
-            // 
-            this.tbShowSML.Location = new System.Drawing.Point(388, 567);
-            this.tbShowSML.Multiline = true;
-            this.tbShowSML.Name = "tbShowSML";
-            this.tbShowSML.ReadOnly = true;
-            this.tbShowSML.Size = new System.Drawing.Size(354, 100);
-            this.tbShowSML.TabIndex = 7;
-            // 
-            // btnSent
-            // 
-            this.btnSent.Enabled = false;
-            this.btnSent.Location = new System.Drawing.Point(755, 567);
-            this.btnSent.Name = "btnSent";
-            this.btnSent.Size = new System.Drawing.Size(95, 43);
-            this.btnSent.TabIndex = 8;
-            this.btnSent.Text = "發送";
-            this.btnSent.UseVisualStyleBackColor = true;
-            this.btnSent.Click += new System.EventHandler(this.btnSent_Click);
             // 
             // edMDLN
             // 
@@ -398,7 +353,7 @@
             // 
             // btnClear
             // 
-            this.btnClear.Location = new System.Drawing.Point(755, 624);
+            this.btnClear.Location = new System.Drawing.Point(398, 622);
             this.btnClear.Name = "btnClear";
             this.btnClear.Size = new System.Drawing.Size(95, 43);
             this.btnClear.TabIndex = 19;
@@ -432,7 +387,7 @@
             this.btnAlarmSetTest.Name = "btnAlarmSetTest";
             this.btnAlarmSetTest.Size = new System.Drawing.Size(95, 43);
             this.btnAlarmSetTest.TabIndex = 22;
-            this.btnAlarmSetTest.Text = "Alarm Set";
+            this.btnAlarmSetTest.Text = "Alarm Set (S5F1)";
             this.btnAlarmSetTest.UseVisualStyleBackColor = true;
             this.btnAlarmSetTest.Click += new System.EventHandler(this.btnAlarmSetTest_Click);
             // 
@@ -442,17 +397,17 @@
             this.btnAlarmresetTest.Name = "btnAlarmresetTest";
             this.btnAlarmresetTest.Size = new System.Drawing.Size(95, 43);
             this.btnAlarmresetTest.TabIndex = 23;
-            this.btnAlarmresetTest.Text = "Alarm Reset";
+            this.btnAlarmresetTest.Text = "Alarm Reset (S5F1)";
             this.btnAlarmresetTest.UseVisualStyleBackColor = true;
             this.btnAlarmresetTest.Click += new System.EventHandler(this.btnAlarmresetTest_Click);
             // 
             // btnTerminalMessage
             // 
-            this.btnTerminalMessage.Location = new System.Drawing.Point(682, 410);
+            this.btnTerminalMessage.Location = new System.Drawing.Point(575, 462);
             this.btnTerminalMessage.Name = "btnTerminalMessage";
-            this.btnTerminalMessage.Size = new System.Drawing.Size(95, 43);
+            this.btnTerminalMessage.Size = new System.Drawing.Size(101, 43);
             this.btnTerminalMessage.TabIndex = 24;
-            this.btnTerminalMessage.Text = "Terminal MSG";
+            this.btnTerminalMessage.Text = "Terminal MSG (S10F1)";
             this.btnTerminalMessage.UseVisualStyleBackColor = true;
             this.btnTerminalMessage.Click += new System.EventHandler(this.btnTerminalMessage_Click);
             // 
@@ -466,7 +421,7 @@
             this.tabControl1.Location = new System.Drawing.Point(388, 0);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(793, 561);
+            this.tabControl1.Size = new System.Drawing.Size(793, 614);
             this.tabControl1.TabIndex = 25;
             // 
             // pageGeneral
@@ -484,13 +439,14 @@
             this.pageGeneral.Location = new System.Drawing.Point(4, 25);
             this.pageGeneral.Name = "pageGeneral";
             this.pageGeneral.Padding = new System.Windows.Forms.Padding(3);
-            this.pageGeneral.Size = new System.Drawing.Size(785, 532);
+            this.pageGeneral.Size = new System.Drawing.Size(785, 585);
             this.pageGeneral.TabIndex = 0;
             this.pageGeneral.Text = "General";
             this.pageGeneral.UseVisualStyleBackColor = true;
             // 
             // gbCommand
             // 
+            this.gbCommand.Controls.Add(this.btnSetS1F13);
             this.gbCommand.Controls.Add(this.btnS2F17);
             this.gbCommand.Controls.Add(this.btnS1F1);
             this.gbCommand.Controls.Add(this.btnS1F13);
@@ -525,7 +481,7 @@
             this.pageAlarm.Location = new System.Drawing.Point(4, 25);
             this.pageAlarm.Name = "pageAlarm";
             this.pageAlarm.Padding = new System.Windows.Forms.Padding(3);
-            this.pageAlarm.Size = new System.Drawing.Size(785, 532);
+            this.pageAlarm.Size = new System.Drawing.Size(785, 585);
             this.pageAlarm.TabIndex = 1;
             this.pageAlarm.Text = "Alarm & Terminal";
             this.pageAlarm.UseVisualStyleBackColor = true;
@@ -597,7 +553,7 @@
             this.pageEvent.Location = new System.Drawing.Point(4, 25);
             this.pageEvent.Name = "pageEvent";
             this.pageEvent.Padding = new System.Windows.Forms.Padding(3);
-            this.pageEvent.Size = new System.Drawing.Size(785, 532);
+            this.pageEvent.Size = new System.Drawing.Size(785, 585);
             this.pageEvent.TabIndex = 2;
             this.pageEvent.Text = "Event";
             this.pageEvent.UseVisualStyleBackColor = true;
@@ -628,7 +584,7 @@
             this.listVIDItem.ItemHeight = 16;
             this.listVIDItem.Location = new System.Drawing.Point(461, 31);
             this.listVIDItem.Name = "listVIDItem";
-            this.listVIDItem.Size = new System.Drawing.Size(179, 212);
+            this.listVIDItem.Size = new System.Drawing.Size(179, 148);
             this.listVIDItem.TabIndex = 5;
             // 
             // lbVIDItem
@@ -646,7 +602,7 @@
             this.listReportItem.ItemHeight = 16;
             this.listReportItem.Location = new System.Drawing.Point(242, 31);
             this.listReportItem.Name = "listReportItem";
-            this.listReportItem.Size = new System.Drawing.Size(179, 212);
+            this.listReportItem.Size = new System.Drawing.Size(179, 148);
             this.listReportItem.TabIndex = 3;
             this.listReportItem.SelectedIndexChanged += new System.EventHandler(this.listReportItem_SelectedIndexChanged);
             // 
@@ -665,7 +621,7 @@
             this.listEventItem.ItemHeight = 16;
             this.listEventItem.Location = new System.Drawing.Point(19, 31);
             this.listEventItem.Name = "listEventItem";
-            this.listEventItem.Size = new System.Drawing.Size(179, 212);
+            this.listEventItem.Size = new System.Drawing.Size(179, 148);
             this.listEventItem.TabIndex = 1;
             this.listEventItem.SelectedIndexChanged += new System.EventHandler(this.listEventItem_SelectedIndexChanged);
             // 
@@ -684,7 +640,7 @@
             this.pageCustomizeSetup.Location = new System.Drawing.Point(4, 25);
             this.pageCustomizeSetup.Name = "pageCustomizeSetup";
             this.pageCustomizeSetup.Padding = new System.Windows.Forms.Padding(3);
-            this.pageCustomizeSetup.Size = new System.Drawing.Size(785, 532);
+            this.pageCustomizeSetup.Size = new System.Drawing.Size(785, 585);
             this.pageCustomizeSetup.TabIndex = 3;
             this.pageCustomizeSetup.Text = "Customize";
             this.pageCustomizeSetup.UseVisualStyleBackColor = true;
@@ -709,10 +665,20 @@
             this.pageCMS.Location = new System.Drawing.Point(4, 25);
             this.pageCMS.Name = "pageCMS";
             this.pageCMS.Padding = new System.Windows.Forms.Padding(3);
-            this.pageCMS.Size = new System.Drawing.Size(785, 532);
+            this.pageCMS.Size = new System.Drawing.Size(785, 585);
             this.pageCMS.TabIndex = 4;
             this.pageCMS.Text = "CMS(E87)";
             this.pageCMS.UseVisualStyleBackColor = true;
+            // 
+            // btnE87NR3
+            // 
+            this.btnE87NR3.Location = new System.Drawing.Point(427, 10);
+            this.btnE87NR3.Name = "btnE87NR3";
+            this.btnE87NR3.Size = new System.Drawing.Size(100, 28);
+            this.btnE87NR3.TabIndex = 19;
+            this.btnE87NR3.Text = "RoundTrip3";
+            this.btnE87NR3.UseVisualStyleBackColor = true;
+            this.btnE87NR3.Click += new System.EventHandler(this.btnE87NR3_Click);
             // 
             // btnE87NR1
             // 
@@ -753,7 +719,7 @@
             this.ctrlCMS.Controls.Add(this.pageCarrierRequest);
             this.ctrlCMS.Controls.Add(this.pageCarrierStatus);
             this.ctrlCMS.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.ctrlCMS.Location = new System.Drawing.Point(3, 77);
+            this.ctrlCMS.Location = new System.Drawing.Point(3, 130);
             this.ctrlCMS.Name = "ctrlCMS";
             this.ctrlCMS.SelectedIndex = 0;
             this.ctrlCMS.Size = new System.Drawing.Size(779, 452);
@@ -992,6 +958,7 @@
             // 
             // pageAccessMode
             // 
+            this.pageAccessMode.Controls.Add(this.lbShowSF);
             this.pageAccessMode.Controls.Add(this.btnReserved);
             this.pageAccessMode.Controls.Add(this.btnNotReserved);
             this.pageAccessMode.Controls.Add(this.lbAccessMode);
@@ -1229,6 +1196,7 @@
             // 
             // pageCarrierRequest
             // 
+            this.pageCarrierRequest.Controls.Add(this.lbShowS3F17);
             this.pageCarrierRequest.Controls.Add(this.btnAddCarrierID);
             this.pageCarrierRequest.Controls.Add(this.lbCID);
             this.pageCarrierRequest.Controls.Add(this.txtCarrierID);
@@ -1335,6 +1303,16 @@
             this.pageCarrierStatus.TabIndex = 2;
             this.pageCarrierStatus.Text = "Carrier Status";
             this.pageCarrierStatus.UseVisualStyleBackColor = true;
+            // 
+            // btnIDVerifFail
+            // 
+            this.btnIDVerifFail.Location = new System.Drawing.Point(167, 15);
+            this.btnIDVerifFail.Name = "btnIDVerifFail";
+            this.btnIDVerifFail.Size = new System.Drawing.Size(137, 42);
+            this.btnIDVerifFail.TabIndex = 4;
+            this.btnIDVerifFail.Text = "ID Verification Fail";
+            this.btnIDVerifFail.UseVisualStyleBackColor = true;
+            this.btnIDVerifFail.Click += new System.EventHandler(this.btnIDVerifFail_Click);
             // 
             // btnSlopMapVerifOK
             // 
@@ -1545,7 +1523,7 @@
             this.shapeContainer4.Shapes.AddRange(new Microsoft.VisualBasic.PowerPacks.Shape[] {
             this.rectLP2,
             this.rectLP1});
-            this.shapeContainer4.Size = new System.Drawing.Size(779, 526);
+            this.shapeContainer4.Size = new System.Drawing.Size(779, 579);
             this.shapeContainer4.TabIndex = 18;
             this.shapeContainer4.TabStop = false;
             // 
@@ -1569,37 +1547,43 @@
             // 
             this.timeUIUpdate.Tick += new System.EventHandler(this.timeUIUpdate_Tick);
             // 
-            // btnIDVerifFail
+            // btnSetS1F13
             // 
-            this.btnIDVerifFail.Location = new System.Drawing.Point(167, 15);
-            this.btnIDVerifFail.Name = "btnIDVerifFail";
-            this.btnIDVerifFail.Size = new System.Drawing.Size(137, 42);
-            this.btnIDVerifFail.TabIndex = 4;
-            this.btnIDVerifFail.Text = "ID Verification Fail";
-            this.btnIDVerifFail.UseVisualStyleBackColor = true;
-            this.btnIDVerifFail.Click += new System.EventHandler(this.btnIDVerifFail_Click);
+            this.btnSetS1F13.Location = new System.Drawing.Point(303, 22);
+            this.btnSetS1F13.Name = "btnSetS1F13";
+            this.btnSetS1F13.Size = new System.Drawing.Size(95, 43);
+            this.btnSetS1F13.TabIndex = 17;
+            this.btnSetS1F13.Text = "F1S13";
+            this.btnSetS1F13.UseVisualStyleBackColor = true;
+            this.btnSetS1F13.Click += new System.EventHandler(this.btnSetS1F13_Click);
             // 
-            // btnE87NR3
+            // lbShowSF
             // 
-            this.btnE87NR3.Location = new System.Drawing.Point(427, 10);
-            this.btnE87NR3.Name = "btnE87NR3";
-            this.btnE87NR3.Size = new System.Drawing.Size(100, 28);
-            this.btnE87NR3.TabIndex = 19;
-            this.btnE87NR3.Text = "RoundTrip3";
-            this.btnE87NR3.UseVisualStyleBackColor = true;
-            this.btnE87NR3.Click += new System.EventHandler(this.btnE87NR3_Click);
+            this.lbShowSF.AutoSize = true;
+            this.lbShowSF.Location = new System.Drawing.Point(723, 404);
+            this.lbShowSF.Name = "lbShowSF";
+            this.lbShowSF.Size = new System.Drawing.Size(42, 16);
+            this.lbShowSF.TabIndex = 7;
+            this.lbShowSF.Text = "S3F25";
+            // 
+            // lbShowS3F17
+            // 
+            this.lbShowS3F17.AutoSize = true;
+            this.lbShowS3F17.Location = new System.Drawing.Point(723, 106);
+            this.lbShowS3F17.Name = "lbShowS3F17";
+            this.lbShowS3F17.Size = new System.Drawing.Size(42, 16);
+            this.lbShowS3F17.TabIndex = 8;
+            this.lbShowS3F17.Text = "S3F17";
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1191, 677);
-            this.Controls.Add(this.tbShowSML);
             this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.btnClear);
             this.Controls.Add(this.comSVID);
             this.Controls.Add(this.lbSVID);
-            this.Controls.Add(this.btnSent);
             this.Controls.Add(this.pnLeftFrame);
             this.Controls.Add(this.lbConnectStateChange);
             this.Controls.Add(this.btnDisconnect);
@@ -1612,7 +1596,6 @@
             this.Load += new System.EventHandler(this.Form1_Load);
             this.Leave += new System.EventHandler(this.Form1_Leave);
             this.pnLeftFrame.ResumeLayout(false);
-            this.pnLeftFrame.PerformLayout();
             this.tabControl1.ResumeLayout(false);
             this.pageGeneral.ResumeLayout(false);
             this.pageGeneral.PerformLayout();
@@ -1629,6 +1612,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.picArrow)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.picLPTSM)).EndInit();
             this.pageAccessMode.ResumeLayout(false);
+            this.pageAccessMode.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.picAccessMode)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.picReservation)).EndInit();
             this.pageAssociated.ResumeLayout(false);
@@ -1649,11 +1633,7 @@
         private System.Windows.Forms.Label lbConnectStateChange;
         private System.Windows.Forms.RichTextBox richTextBox1;
         private System.Windows.Forms.Button btnS1F1;
-        private System.Windows.Forms.ListBox listboxSmlFile;
         private System.Windows.Forms.Panel pnLeftFrame;
-        private System.Windows.Forms.Label lbShowSMLFile;
-        private System.Windows.Forms.TextBox tbShowSML;
-        private System.Windows.Forms.Button btnSent;
         private System.Windows.Forms.TextBox edMDLN;
         private System.Windows.Forms.Label lbMDLN;
         private System.Windows.Forms.Label lbSOFTREV;
@@ -1776,6 +1756,9 @@
         private System.Windows.Forms.Button btnSlopMapVerifOK;
         private System.Windows.Forms.Button btnIDVerifFail;
         private System.Windows.Forms.Button btnE87NR3;
+        private System.Windows.Forms.Button btnSetS1F13;
+        private System.Windows.Forms.Label lbShowSF;
+        private System.Windows.Forms.Label lbShowS3F17;
     }
 }
 
