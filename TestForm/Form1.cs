@@ -13,6 +13,10 @@ using System.Windows.Forms;
 using SanwaSecsDll;
 //using Secs4Net;
 //using Secs4Net.Sml;
+using log4net;
+using log4net.Config;
+
+
 
 
 
@@ -21,7 +25,8 @@ namespace TestForm
     public partial class Form1 : Form
     {
         SanwaSecs _secsGemTool;
-        SecsLogger _secsLogger;
+        //SecsLogger _secsLogger;
+        private static readonly ILog logger = LogManager.GetLogger(typeof(Form1));
         //SecsMessageList _secsMessagesList;
 
         readonly BindingList<PrimaryMessageWrapper> recvBuffer = new BindingList<PrimaryMessageWrapper>();
@@ -35,6 +40,8 @@ namespace TestForm
         EventWaitHandle ewhNormalRoundtrip2 = new EventWaitHandle(false, EventResetMode.ManualReset);
 
         EventWaitHandle ewhSlotMapVerifOK = new EventWaitHandle(false, EventResetMode.ManualReset);
+
+
 
         enum eVerification
         {
@@ -74,7 +81,8 @@ namespace TestForm
         {
             InitializeComponent();
 
-            _secsLogger = new SecsLogger(this);
+            //_secsLogger = new SecsLogger(this);
+            XmlConfigurator.Configure();//Log4N 需要
             try
             {
 #if DEBUG
@@ -97,7 +105,7 @@ namespace TestForm
 
             _secsGemTool = new SanwaSecs
             {
-                _logger = _secsLogger,
+                //_logger = _secsLogger,
             };
 
             _secsGemTool.messageFileName = "SecsMessage.json";
@@ -171,6 +179,8 @@ namespace TestForm
                 Number = 2
             };
             _loadPortList.Add(lpObj.Name, lpObj);
+
+            logger.Info("Form_Constructor");
         }
 
         private void btnConnect_Click(object sender, EventArgs e)
@@ -229,7 +239,7 @@ namespace TestForm
                 catch(Exception ex)
                 {
                     _secsGemTool.ReplyIllegalData(e);
-                    _secsLogger.Error("PrimaryMessageReceived_" + ex.Message);
+                    logger.Error("PrimaryMessageReceived_" + ex.Message);
                 }
             });
         }
@@ -509,63 +519,63 @@ namespace TestForm
             //    }
             //});
         }
-        class SecsLogger : ISecsGemLogger
-        {
-            readonly Form1 _form;
-            internal SecsLogger(Form1 form)
-            {
-                _form = form;
-            }
-            public void MessageIn(SecsMessage msg, int systembyte)
-            {
-                _form.BeginInvoke((MethodInvoker)delegate {
-                    _form.richTextBox1.SelectionColor = Color.Black;
-                    _form.richTextBox1.AppendText($"<-- [0x{systembyte:X8}] {msg.ToSml()}\n");
-                });
-            }
+        //class SecsLogger : ISecsGemLogger
+        //{
+        //    readonly Form1 _form;
+        //    internal SecsLogger(Form1 form)
+        //    {
+        //        _form = form;
+        //    }
+        //    public void MessageIn(SecsMessage msg, int systembyte)
+        //    {
+        //        _form.BeginInvoke((MethodInvoker)delegate {
+        //            _form.richTextBox1.SelectionColor = Color.Black;
+        //            _form.richTextBox1.AppendText($"<-- [0x{systembyte:X8}] {msg.ToSml()}\n");
+        //        });
+        //    }
 
-            public void MessageOut(SecsMessage msg, int systembyte)
-            {
-                _form.BeginInvoke((MethodInvoker)delegate {
-                    _form.richTextBox1.SelectionColor = Color.Black;
-                    _form.richTextBox1.AppendText($"--> [0x{systembyte:X8}] {msg.ToSml()}\n");
-                });
-            }
+        //    public void MessageOut(SecsMessage msg, int systembyte)
+        //    {
+        //        _form.BeginInvoke((MethodInvoker)delegate {
+        //            _form.richTextBox1.SelectionColor = Color.Black;
+        //            _form.richTextBox1.AppendText($"--> [0x{systembyte:X8}] {msg.ToSml()}\n");
+        //        });
+        //    }
 
-            public void Info(string msg)
-            {
-                _form.BeginInvoke((MethodInvoker)delegate {
-                    _form.richTextBox1.SelectionColor = Color.Blue;
-                    _form.richTextBox1.AppendText($"{msg}\n");
-                });
-            }
+        //    public void Info(string msg)
+        //    {
+        //        _form.BeginInvoke((MethodInvoker)delegate {
+        //            _form.richTextBox1.SelectionColor = Color.Blue;
+        //            _form.richTextBox1.AppendText($"{msg}\n");
+        //        });
+        //    }
 
-            public void Warning(string msg)
-            {
-                _form.BeginInvoke((MethodInvoker)delegate {
-                    _form.richTextBox1.SelectionColor = Color.Red;
-                    _form.richTextBox1.AppendText($"{msg}\n");
-                });
-            }
+        //    public void Warning(string msg)
+        //    {
+        //        _form.BeginInvoke((MethodInvoker)delegate {
+        //            _form.richTextBox1.SelectionColor = Color.Red;
+        //            _form.richTextBox1.AppendText($"{msg}\n");
+        //        });
+        //    }
 
-            public void Error(string msg, Exception ex = null)
-            {
-                _form.BeginInvoke((MethodInvoker)delegate {
-                    _form.richTextBox1.SelectionColor = Color.Red;
-                    _form.richTextBox1.AppendText($"{msg}\n");
-                    _form.richTextBox1.SelectionColor = Color.Gray;
-                    _form.richTextBox1.AppendText($"{ex}\n");
-                });
-            }
+        //    public void Error(string msg, Exception ex = null)
+        //    {
+        //        _form.BeginInvoke((MethodInvoker)delegate {
+        //            _form.richTextBox1.SelectionColor = Color.Red;
+        //            _form.richTextBox1.AppendText($"{msg}\n");
+        //            _form.richTextBox1.SelectionColor = Color.Gray;
+        //            _form.richTextBox1.AppendText($"{ex}\n");
+        //        });
+        //    }
 
-            public void Debug(string msg)
-            {
-                _form.BeginInvoke((MethodInvoker)delegate {
-                    _form.richTextBox1.SelectionColor = Color.DarkOrange;
-                    _form.richTextBox1.AppendText($"{msg}\n");
-                });
-            }
-        }
+        //    public void Debug(string msg)
+        //    {
+        //        _form.BeginInvoke((MethodInvoker)delegate {
+        //            _form.richTextBox1.SelectionColor = Color.DarkOrange;
+        //            _form.richTextBox1.AppendText($"{msg}\n");
+        //        });
+        //    }
+        //}
         private async void btnS1F1_Click(object sender, EventArgs e)
         {
             await _secsGemTool.S1F1Async();

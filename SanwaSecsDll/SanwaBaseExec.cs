@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.IO;
 using System.Windows;
+using log4net;
 
 
 
@@ -51,7 +52,9 @@ namespace SanwaSecsDll
         public SanwaSMLManager _smlManager;
 
         //提供Interface給外部紀錄Log
-        public ISecsGemLogger _logger;
+        //public ISecsGemLogger _logger;
+
+        private static readonly ILog _logger = LogManager.GetLogger(typeof(SanwaBaseExec));
 
         public CONTROL_STATE _currentState { get; set; }
 
@@ -99,6 +102,8 @@ namespace SanwaSecsDll
             _svFolderName = EnvironmentDirectory + "\\Data_SV\\";
             _ecFolderName = EnvironmentDirectory + "\\Data_EC\\";
             _dvFolderName = EnvironmentDirectory + "\\Data_DV\\";
+
+            _logger.Info("SanwaBaseExec_SanwaBaseExec()");
         }
         public void Initialize()
         {
@@ -146,6 +151,8 @@ namespace SanwaSecsDll
 
             //_currentLPState = E87_LPTS.IN_SERVICE;
             //_previousLPState = E87_LPTS.IN_SERVICE;
+
+            _logger.Info("SanwaBaseExec_Initialize()");
         }
         public SanwaSV SetSV(string id, object value)
         {

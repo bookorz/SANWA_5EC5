@@ -13,6 +13,7 @@ using System.Windows;
 using System.Text.Json;
 
 using System.Configuration;
+using log4net;
 
 namespace SanwaSecsDll
 {
@@ -37,7 +38,8 @@ namespace SanwaSecsDll
         public int T8 { get { return _secsGem.T8; } set { _secsGem.T8 = value; } }
 
         //提供Interface給外部紀錄Log
-        public ISecsGemLogger _logger;
+        //public ISecsGemLogger _logger;
+        private static readonly ILog _logger = LogManager.GetLogger(typeof(SanwaSecs));
 
         //轉換sml檔案
         //public SecsMessageList _secsMessages;
@@ -231,7 +233,7 @@ namespace SanwaSecsDll
             Port = 5000;
             DecoderBufferSize = 65535;
             DeviceId = 0;
-            _logger = null;
+            //_logger = null;
             //_secsMessages = null;
             _baseExec = null;
 
@@ -248,7 +250,7 @@ namespace SanwaSecsDll
             Port = port;
             DecoderBufferSize = receiveBufferSize;
             DeviceId = 0;
-            _logger = logger;
+            //_logger = logger;
             //_secsMessages = secsMessages;
             _baseExec = null;
 
@@ -280,7 +282,7 @@ namespace SanwaSecsDll
 
                     _carrierList = _carrierList,
 
-                    _logger = _logger,
+                    //_logger = _logger,
 
                     _smlManager = _smlManager
                 };
@@ -364,7 +366,10 @@ namespace SanwaSecsDll
                 IPAddress.Parse(IpAddress),
                 Port,
                 DecoderBufferSize)
-            { Logger = _logger, DeviceId = (ushort)DeviceId };
+                {
+                    //Logger = _logger,
+                    DeviceId = (ushort)DeviceId
+                };
 
             _baseExec._secsGem = _secsGem;
 

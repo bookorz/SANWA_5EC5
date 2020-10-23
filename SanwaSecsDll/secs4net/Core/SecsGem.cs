@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using SanwaSecsDll.Properties;
+using log4net;
 
 //namespace Secs4Net
 namespace SanwaSecsDll
@@ -24,12 +25,13 @@ namespace SanwaSecsDll
         public event EventHandler<PrimaryMessageWrapper> PrimaryMessageReceived = DefaultPrimaryMessageReceived;
         private static void DefaultPrimaryMessageReceived(object sender, PrimaryMessageWrapper _) { }
 
-        private ISecsGemLogger _logger = DefaultLogger;
-        public ISecsGemLogger Logger
-        {
-            get => _logger;
-            set => _logger = value ?? DefaultLogger;
-        }
+        //private ISecsGemLogger _logger = DefaultLogger;
+        //public ISecsGemLogger Logger
+        //{
+        //    get => _logger;
+        //    set => _logger = value ?? DefaultLogger;
+        //}
+        private static readonly ILog _logger = LogManager.GetLogger(typeof(SecsGem));
 
         /// <summary>
         /// Connection state
@@ -135,7 +137,7 @@ namespace SanwaSecsDll
 
         private static readonly SecsMessage ControlMessage = new SecsMessage(0, 0, string.Empty);
         private static readonly ArraySegment<byte> ControlMessageLengthBytes = new ArraySegment<byte>(new byte[] { 0, 0, 0, 10 });
-        private static readonly DefaultSecsGemLogger DefaultLogger = new DefaultSecsGemLogger();
+        //private static readonly DefaultSecsGemLogger DefaultLogger = new DefaultSecsGemLogger();
         private readonly SystemByteGenerator _systemByte = new SystemByteGenerator();
 
         private readonly EventHandler<SocketAsyncEventArgs> _sendControlMessageCompleteHandler;
@@ -345,7 +347,7 @@ namespace SanwaSecsDll
                     }
                     else
                     {
-                        _logger.Warning("Received Unexpected Control Message: " + header.MessageType);
+                        _logger.Warn("Received Unexpected Control Message: " + header.MessageType);
                         return;
                     }
                 }
@@ -391,8 +393,9 @@ namespace SanwaSecsDll
 
                 if (header.DeviceId != DeviceId && msg.S != 9 && msg.F != 1)
                 {
-                    _logger.MessageIn(msg, systembyte);
-                    _logger.Warning("Received Unrecognized Device Id Message");
+                    //_logger.Info(msg, systembyte);
+                    _logger.Info(msg.ToSml());
+                    _logger.Warn("Received Unrecognized Device Id Message");
                     SendDataMessageAsync(new SecsMessage(9, 1, "Unrecognized Device Id", Item.B(header.EncodeTo(new byte[10])), replyExpected: false), NewSystemId);
                     return;
                 }
@@ -402,7 +405,7 @@ namespace SanwaSecsDll
                     if (msg.S != 9)
                     {
                         //Primary message
-                        _logger.MessageIn(msg, systembyte);
+                        _logger.Info(msg.ToSml());
                         _taskFactory.StartNew(
                             wrapper => PrimaryMessageReceived(this, Unsafe.As<PrimaryMessageWrapper>(wrapper)),
                             new PrimaryMessageWrapper(this, header, msg));
@@ -415,7 +418,8 @@ namespace SanwaSecsDll
                 }
 
                 // Secondary message
-                _logger.MessageIn(msg, systembyte);
+                //_logger.Info(msg, systembyte);
+                _logger.Info(msg.ToSml());
                 if (_replyExpectedMsgs.TryGetValue(systembyte, out var ar))
                     ar.HandleReplyMessage(msg);
             }
@@ -520,8 +524,8 @@ namespace SanwaSecsDll
                 return;
             }
 
-            _logger.MessageOut(completeToken.MessageSent, completeToken.Id);
-
+            //_logger.MessageOut(completeToken.MessageSent, completeToken.Id);
+            _logger.Info(completeToken.MessageSent.ToSml());
             if (!_replyExpectedMsgs.ContainsKey(completeToken.Id))
             {
                 completeToken.SetResult(null);
