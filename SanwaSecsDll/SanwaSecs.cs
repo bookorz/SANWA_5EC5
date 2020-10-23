@@ -78,7 +78,7 @@ namespace SanwaSecsDll
         
         public Dictionary<string, SanwaCarrier> _carrierList = new Dictionary<string, SanwaCarrier>();
 
-        private Dictionary<string, SanwaStrFunSetting> _strFunList = new Dictionary<string, SanwaStrFunSetting>();
+        //private Dictionary<string, SanwaStrFunSetting> _strFunList = new Dictionary<string, SanwaStrFunSetting>();
 
 
         //
@@ -280,18 +280,16 @@ namespace SanwaSecsDll
 
                     _carrierList = _carrierList,
 
-                    _strFunList = _strFunList,
-
                     _logger = _logger,
 
                     _smlManager = _smlManager
                 };
 
 
-                List<SanwaStrFunSetting>  tempStrFunList = new ConfigTool<List<SanwaStrFunSetting>>().ReadFile(messageFileName);
+                //List<SanwaStrFunSetting>  tempStrFunList = new ConfigTool<List<SanwaStrFunSetting>>().ReadFile(messageFileName);
 
-                foreach (SanwaStrFunSetting obj in tempStrFunList)
-                    _strFunList.Add(obj.Name, obj);
+                //foreach (SanwaStrFunSetting obj in tempStrFunList)
+                //    _strFunList.Add(obj.Name, obj);
 
                 _baseExec.ChangeControlStateEvent += ChangeControlStateEvent;
 

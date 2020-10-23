@@ -22,11 +22,12 @@ namespace SanwaSecsDll
             //_logger.Info(sanwaTDS._smpln.ToString());
             //SecsMessage secsMessage = _secsMessages[6, 1].FirstOrDefault();
             //if (secsMessage != null)
-            _strFunList.TryGetValue("S6F1", out SanwaStrFunSetting strfunObj);
+            //_strFunList.TryGetValue("S6F1", out SanwaStrFunSetting strfunObj);
+            _smlManager._messageList.TryGetValue("S6F1", out SanwaSML sanwaSML);
 
-            if(strfunObj != null)
+            if (sanwaSML != null)
             {
-                SecsMessage secsMessage = new SecsMessage(6, 1, strfunObj.Text);
+                SecsMessage secsMessage = new SecsMessage(6, 1, sanwaSML.MessageName);
                 string newSendMsg = GetMessageName(secsMessage.ToSml());
 
                 newSendMsg += "< L[4]\r\n";

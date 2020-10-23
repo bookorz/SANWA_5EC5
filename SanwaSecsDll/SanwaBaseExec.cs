@@ -74,7 +74,7 @@ namespace SanwaSecsDll
         public Dictionary<string, LoadPort> _loadPortList;
         public Dictionary<string, LoadPortGroup> _loadPortGroupList;
 
-        public Dictionary<string, SanwaStrFunSetting> _strFunList;
+        //public Dictionary<string, SanwaStrFunSetting> _strFunList;
 
 
         private string _svFolderName;
@@ -643,16 +643,14 @@ namespace SanwaSecsDll
             _ecList.TryGetValue(ECName.GEM_DATAID_FORMAT, out SanwaEC sanwaEC);
             if (sanwaEC == null) return;;
 
-            SanwaStrFunSetting strfunObj;
-            if(!annotated)
+            SanwaSML sanwaSML;
+            if (!annotated)
             {
-                _strFunList.TryGetValue("S6F11", out strfunObj);
-                if (strfunObj == null) return;
+                _smlManager._messageList.TryGetValue("S6F11", out sanwaSML);
             }
             else
             {
-                _strFunList.TryGetValue("S6F13", out strfunObj);
-                if (strfunObj == null) return;
+                _smlManager._messageList.TryGetValue("S6F13", out sanwaSML);
             }
 
 
@@ -665,7 +663,16 @@ namespace SanwaSecsDll
 
             SanwaEC ecObj;
 
-            SecsMessage secsMessage = new SecsMessage(6, 11, strfunObj.Text);
+            SecsMessage secsMessage;
+
+            if (!annotated)
+            {
+                secsMessage = new SecsMessage(6, 11, sanwaSML.MessageName);
+            }
+            else
+            {
+                secsMessage = new SecsMessage(6, 13, sanwaSML.MessageName);
+            }
 
             string ReplyMSG = GetMessageName(secsMessage.ToSml());
 
@@ -1101,7 +1108,7 @@ namespace SanwaSecsDll
                             else if(6 == replySecsmsg.F)
                             {
                                 byte[] ack = { SanwaACK.ACKC10_ACK };
-                                ReceiveS10F3(e, ref ack);
+                                ReceiveS10F5(e, ref ack);
                                 ReplyACK(e, replySecsmsg, ack);
                             }
                             else
