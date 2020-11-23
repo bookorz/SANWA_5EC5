@@ -2216,5 +2216,23 @@ namespace TestForm
 
             _secsGemTool.SetStreamFunction(s1f13);
         }
+
+        private void btnSetS16F9_Click(object sender, EventArgs e)
+        {
+            ////測試使用
+            //_secsGemTool.SetSV(SVName.PP_FORMAT, 1);
+            //_secsGemTool.SetSV(SVName.GEM_SPOOL_COUNT_ACTUAL, 10);
+            //_secsGemTool.SetSV(SVName.GEM_SPOOL_COUNT_TOTAL, 12);
+            //List<string> vidList = new List<string>
+            //{
+            //    "43",
+            //    "53",
+            //    "54"
+            //};
+            List<string> vidList = new List<string>();
+            _secsGemTool.S16F9PJEventNotify(1,
+                                            "PRJob1-1111111111111111111111111111111111111111111111111111111111111111111111111", 
+                                            vidList);
+        }
     }
 }

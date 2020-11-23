@@ -41,6 +41,12 @@ namespace SanwaSecsDll
         public SanwaCarrier carrierObj = null;
     }
 
+    public class ErrorStatus
+    {
+        public ulong Errorcode;
+        public string Errortext;
+    }
+
     public partial class SanwaBaseExec
     {
         public string _mdln;
@@ -77,8 +83,8 @@ namespace SanwaSecsDll
         public Dictionary<string, LoadPort> _loadPortList;
         public Dictionary<string, LoadPortGroup> _loadPortGroupList;
 
-        //public Dictionary<string, SanwaStrFunSetting> _strFunList;
-
+        public List<SanwaPJ> _pJList;
+        public List<SanwaPJ> _pJQueue;
 
         private string _svFolderName;
         private string _ecFolderName;
@@ -107,8 +113,7 @@ namespace SanwaSecsDll
         }
         public void Initialize()
         {
-            SanwaEC ecObj;
-            _ecList.TryGetValue(ECName.GEM_INIT_CONTROL_STATE, out ecObj);
+            _ecList.TryGetValue(ECName.GEM_INIT_CONTROL_STATE, out SanwaEC ecObj);
             if (ecObj != null)
             {
                 if ("1" == ecObj._value.ToString())
@@ -148,9 +153,6 @@ namespace SanwaSecsDll
                     }
                 }
             }
-
-            //_currentLPState = E87_LPTS.IN_SERVICE;
-            //_previousLPState = E87_LPTS.IN_SERVICE;
 
             _logger.Info("SanwaBaseExec_Initialize()");
         }
@@ -809,7 +811,7 @@ namespace SanwaSecsDll
 
                         lResult = PROCESS_MSG_RESULT.PROCESS_FINISH;
 
-                        replySecsmsg = new SecsMessage(receiveSecsmsg.S, (byte)(receiveSecsmsg.F + 1), smlObj.MessageName);
+                        replySecsmsg = new SecsMessage(receiveSecsmsg.S, (byte)(receiveSecsmsg.F + 1), smlObj2.MessageName);
 
                         if (replySecsmsg.F % 2 == 0)
                             replySecsmsg.ReplyExpected = false;
@@ -1127,6 +1129,38 @@ namespace SanwaSecsDll
                                 ReplyUnrecognizedFunctionType(e);
                             }
 
+                        }
+                        else if (16 == replySecsmsg.S)
+                        {
+                            if (IsOfflineState())
+                            {
+                                ReplyInOffLineState(e);
+                                return lResult;
+                            }
+
+                            if (6 == replySecsmsg.F)
+                            {
+                            }
+                            else if (12 == replySecsmsg.F)
+                            {
+                                ReplyS16F12(e, receiveSecsmsg, replySecsmsg);
+                            }
+                            else if(18 == replySecsmsg.F)
+                            {
+                                ReplyS16F18(e, receiveSecsmsg, replySecsmsg);
+                            }
+                            else if(20 == replySecsmsg.F)
+                            {
+                                ReplyS16F20(e, receiveSecsmsg, replySecsmsg);
+                            }
+                            else
+                            {
+                                //Replay S9F5
+                                //基本上流程不會到這邊,
+                                //如果Config檔沒有定義,
+                                //就前面流程將通知AP端回覆
+                                ReplyUnrecognizedFunctionType(e);
+                            }
                         }
                         else
                         {
@@ -1591,27 +1625,6 @@ namespace SanwaSecsDll
             reply.F = (byte)(receive.F + 1);
             reply.ReplyExpected = false;
         }
-        //private void RecursivelyFindMDLNAndSOFTREV(Item id)
-        //{
-        //    foreach (var subItem in id.Items)
-        //    {
-        //        if (subItem.Format == SecsFormat.List)
-        //        {
-        //            RecursivelyFindMDLNAndSOFTREV(subItem);
-        //        }
-        //        else if (subItem.Format == SecsFormat.ASCII)
-        //        {
-        //            if (subItem.GetString().Equals("MDLN"))
-        //            {
-        //                subItem.SetString(_mdln);
-        //            }
-        //            else if (subItem.GetString().Equals("SOFTREV"))
-        //            {
-        //                subItem.SetString(_softRev);
-        //            }
-        //        }
-        //    }
-        //}
         private void SetItemToStringType(Item item, out string id)
         {
             SetItemToStringType(item, out id, out SecsFormat secsFormat);
@@ -1632,6 +1645,16 @@ namespace SanwaSecsDll
                 case SecsFormat.U4: id = item.GetValue<uint>().ToString(); break;
                 case SecsFormat.ASCII: id = item.GetString(); break;
             }
+        }
+        public bool CheckFomart10(Item item)
+        {
+            bool Ret = true;
+
+            if (item.Format != SecsFormat.Binary)      //format Binary
+            {
+                Ret = false;
+            }
+            return Ret;
         }
         public bool CheckFomart20(Item item)
         {
@@ -1667,6 +1690,14 @@ namespace SanwaSecsDll
             {
                 Ret = false;
             }
+            return Ret;
+        }
+        public bool CheckFomart1020(Item item)
+        {
+            bool Ret = true;
+            if (!(CheckFomart10(item) || CheckFomart20(item)))
+                Ret = false;
+
             return Ret;
         }
         public bool CheckFomart3x5x(Item item)

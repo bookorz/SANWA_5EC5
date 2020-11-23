@@ -16,7 +16,7 @@ namespace TestForm.Log4NetAppender
         private RichTextBox _textBox;
         public string FormName { get; set; }
         public string TextBoxName { get; set; }
-        delegate void PrintHandler(RichTextBox tb, string text);
+        delegate void PrintHandler(RichTextBox tb, string text, string displayName);
         public static bool ShowDebug = false;
         public static bool ShowInfo = true;
 
@@ -46,36 +46,37 @@ namespace TestForm.Log4NetAppender
             //Td.IsBackground = true;
             //Td.Start();
 
-            switch (loggingEvent.Level.DisplayName)
-            {
-                case "DEBUG":
-                    if (!ShowDebug)
-                    {
-                        return;
-                    }
-                    break;
-                case "INFO":
-                    if (!ShowInfo)
-                    {
-                        return;
-                    }
-                    break;
-            }
+            //switch (loggingEvent.Level.DisplayName)
+            //{
+            //    case "DEBUG":
+            //        if (!ShowDebug)
+            //        {
+            //            return;
+            //        }
+            //        break;
+            //    case "INFO":
+            //        if (!ShowInfo)
+            //        {
+            //            return;
+            //        }
+            //        break;
+
+            //}
 
 
             //Print(_textBox, loggingEvent.TimeStamp.ToString("yyyy-MM-dd HH:mm:ss.fff ") + "[" + loggingEvent.Level.DisplayName + "] " + loggingEvent.RenderedMessage + Environment.NewLine);
-            Print(_textBox, loggingEvent.RenderedMessage + Environment.NewLine);
+            Print(_textBox, loggingEvent.RenderedMessage + Environment.NewLine, loggingEvent.Level.DisplayName);
 
         }
 
-        public static void Print(RichTextBox tb, string msg)
+        public static void Print(RichTextBox tb, string msg , string DisplayName)
         {
             //判斷這個TextBox的物件是否在同一個執行緒上
             if (tb.InvokeRequired)
             {
                 //當InvokeRequired為true時，表示在不同的執行緒上，所以進行委派的動作!!
                 PrintHandler ph = new PrintHandler(Print);
-                tb.BeginInvoke(ph, tb, msg);
+                tb.BeginInvoke(ph, tb, msg, DisplayName);
             }
             else
             {
@@ -87,31 +88,17 @@ namespace TestForm.Log4NetAppender
                 tb.SelectionStart = tb.TextLength;
                 tb.SelectionLength = 0;
 
+                switch (DisplayName)
+                {
+                    case "WARN":
+                        tb.SelectionColor = Color.Orange;
+                        break;
 
-                //if (msg.ToUpper().Contains("FIN"))
-                //{
-                //    tb.SelectionColor = Color.Green;
-                //}
-                //else if (msg.ToUpper().Contains("RECEIVE"))
-                //{
-                //    tb.SelectionColor = Color.Blue;
-                //}
-                //else if (msg.ToUpper().Contains("CMD") || msg.ToUpper().Contains("GET") || msg.ToUpper().Contains("SET"))
-                //{
-                //    tb.SelectionColor = Color.Coral;
-                //}
-                //else if (msg.ToUpper().Contains("MCR"))
-                //{
-                //    tb.SelectionColor = Color.Coral;
-                //}
-                //else if (msg.ToUpper().Contains("異常描述"))
-                //{
-                //    tb.SelectionColor = Color.Red;
-                //}
-                //else
-                //{
-                //    tb.SelectionColor = Color.DimGray;
-                //}
+                    default:
+                        tb.SelectionColor = Color.Black;
+                        break;
+
+                }
 
                 tb.AppendText(msg);
                 tb.ScrollToCaret();

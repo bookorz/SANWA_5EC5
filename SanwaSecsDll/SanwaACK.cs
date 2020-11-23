@@ -85,6 +85,12 @@ namespace SanwaSecsDll
         public const byte CAACK_REJECTED = 0x05;                                //Rejected. Invalid state.
         public const byte CAACK_CMD_PERFOEM_WITH_ERR = 0x06;                    //Command performed with errors. 
 
+        /// <summary>
+        /// S5F14, F15, F18; S16F4, F6, F7, F12, F16, F18, F24, F26, F28, F30;  S17F4, F8, F14
+        /// </summary>
+        public const bool ACKA_SUCCESSFUL = true;
+        public const bool ACKA_UNSUCCESSFUL = false;
+
         //ERRORCODE
         public const ulong ERRCODE_NO_ERROR = 0;                                //No error
         public const ulong ERRCODE_UNKNOWN_OBJECT = 1;                          //Unknown object in Object Specifier 

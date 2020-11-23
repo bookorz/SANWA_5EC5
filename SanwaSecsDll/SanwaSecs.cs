@@ -80,11 +80,8 @@ namespace SanwaSecsDll
         
         public Dictionary<string, SanwaCarrier> _carrierList = new Dictionary<string, SanwaCarrier>();
 
-        //private Dictionary<string, SanwaStrFunSetting> _strFunList = new Dictionary<string, SanwaStrFunSetting>();
-
-
-        //
-        //public BindingList<PrimaryMessageWrapper> recvBuffer = new BindingList<PrimaryMessageWrapper>();
+        public List<SanwaPJ> _pJList = new List<SanwaPJ>();
+        public List<SanwaPJ> _pJQueue = new List<SanwaPJ>();
 
         //連線狀態變化
         public delegate void ConnectionStateChanged();
@@ -283,6 +280,8 @@ namespace SanwaSecsDll
                     _carrierList = _carrierList,
 
                     //_logger = _logger,
+                    _pJList = _pJList,
+                    _pJQueue = _pJQueue,
 
                     _smlManager = _smlManager
                 };
@@ -756,6 +755,114 @@ namespace SanwaSecsDll
 
             _secsGem.SendAsync(s10f1);
 
+        }
+        public async Task S16F9PJEventNotify(byte preventID, string pbID, List<string> vID)
+        {
+            if (_baseExec == null) return;
+            if (!CheckConnectState())
+            {
+                _logger.Warn("S16F9PJEventNotify_if (!CheckConnectState())");
+                return;
+            }
+
+            _smlManager._messageList.TryGetValue("S16F9", out SanwaSML sanwaSML);
+            if (sanwaSML == null)
+            {
+                _logger.Warn("S16F9PJEventNotify_if(sanwaSML == null)");
+                return;
+            }
+
+            if(preventID > 2)
+            {
+                _logger.Warn("S16F9PJEventNotify_if(preventID > 2)");
+                return;
+            }
+
+            bool IsMemberExists = _pJList.Exists(x => x.ObjID.Equals(pbID));
+
+            if(!IsMemberExists)
+            {
+                _logger.Warn("S16F9PJEventNotify_!IsMemberExists");
+                return;
+            }
+
+            SecsMessage secsMessage = new SecsMessage(16, 9, sanwaSML.MessageName);
+
+            string ReplyMSG = GetMessageName(secsMessage.ToSml());
+            ReplyMSG += "<L[4]\r\n";
+            ReplyMSG += "<B[0]" + preventID.ToString() + ">\r\n";
+            ReplyMSG += "<A[0]" + _baseExec.GetDateTime() + ">\r\n";
+            ReplyMSG += "<A[0]" + pbID + ">\r\n";
+            ReplyMSG += "<L["+ vID.Count + "]\r\n";
+            foreach (string pjid in vID)
+            {
+                ReplyMSG += "<L[2]\r\n";
+                bool inSVList = false;
+                bool inDVList = false;
+                bool inECList = false;
+                inSVList = _svIDList.Any(x => x.Key.Equals(pjid));
+                if(!inSVList)
+                {
+                    inDVList = _dvIDList.Any(x => x.Key.Equals(pjid));
+
+                    if(!inDVList)
+                    {
+                        inECList = _ecIDList.Any(x => x.Key.Equals(pjid));
+                    }
+                }
+                ReplyMSG += "<U4[1]" + pjid + ">\r\n";
+
+                if (!inSVList && !inDVList && !inECList)
+                {
+                    ReplyMSG += "<L[0]\r\n";
+                    ReplyMSG += ">\r\n";
+                }
+                else if (inSVList)
+                {
+                    _svIDList.TryGetValue(pjid, out SanwaSV sanwaSVObj);
+                    if(sanwaSVObj._value != null)
+                    {
+                        ReplyMSG += _baseExec.GetToSMLItem(sanwaSVObj._format, sanwaSVObj._value.ToString());
+                    }
+                    else
+                    {
+                        ReplyMSG += _baseExec.GetToSMLItem(sanwaSVObj._format, "");
+                    }
+
+                }
+                else if (inDVList)
+                {
+                    _dvIDList.TryGetValue(pjid, out SanwaDV sanwaDVObj);
+                    if (sanwaDVObj._value != null)
+                    {
+                        ReplyMSG += _baseExec.GetToSMLItem(sanwaDVObj._format, sanwaDVObj._value.ToString());
+                    }
+                    else
+                    {
+                        ReplyMSG += _baseExec.GetToSMLItem(sanwaDVObj._format, "");
+                    }
+
+                }
+                else if (inECList)
+                {
+                    _ecIDList.TryGetValue(pjid, out SanwaEC sanwaECObj);
+                    if (sanwaECObj._value != null)
+                    {
+                        ReplyMSG += _baseExec.GetToSMLItem(sanwaECObj._type, sanwaECObj._value.ToString());
+                    }
+                    else
+                    {
+                        ReplyMSG += _baseExec.GetToSMLItem(sanwaECObj._type, "");
+                    }
+
+                }
+                ReplyMSG += ">\r\n";
+            }
+
+            ReplyMSG += ">\r\n";
+            ReplyMSG += ">\r\n";
+
+            _secsGem.SendAsync(ReplyMSG.ToSecsMessage());
         }
         public async Task<SecsMessage> SetStreamFunction(SecsMessage secsMessage)
         {

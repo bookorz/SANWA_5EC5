@@ -56,6 +56,7 @@
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.pageGeneral = new System.Windows.Forms.TabPage();
             this.gbCommand = new System.Windows.Forms.GroupBox();
+            this.btnSetS1F13 = new System.Windows.Forms.Button();
             this.btnS2F17 = new System.Windows.Forms.Button();
             this.pageAlarm = new System.Windows.Forms.TabPage();
             this.lbSendTerminalMSG = new System.Windows.Forms.Label();
@@ -102,6 +103,7 @@
             this.rectOutOfService = new Microsoft.VisualBasic.PowerPacks.RectangleShape();
             this.picLPTSM = new System.Windows.Forms.PictureBox();
             this.pageAccessMode = new System.Windows.Forms.TabPage();
+            this.lbShowSF = new System.Windows.Forms.Label();
             this.btnReserved = new System.Windows.Forms.Button();
             this.btnNotReserved = new System.Windows.Forms.Button();
             this.lbAccessMode = new System.Windows.Forms.Label();
@@ -124,6 +126,7 @@
             this.rectNotAssociated = new Microsoft.VisualBasic.PowerPacks.RectangleShape();
             this.picAssociated = new System.Windows.Forms.PictureBox();
             this.pageCarrierRequest = new System.Windows.Forms.TabPage();
+            this.lbShowS3F17 = new System.Windows.Forms.Label();
             this.btnAddCarrierID = new System.Windows.Forms.Button();
             this.lbCID = new System.Windows.Forms.Label();
             this.txtCarrierID = new System.Windows.Forms.TextBox();
@@ -159,9 +162,7 @@
             this.rectLP1 = new Microsoft.VisualBasic.PowerPacks.RectangleShape();
             this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
             this.timeUIUpdate = new System.Windows.Forms.Timer(this.components);
-            this.btnSetS1F13 = new System.Windows.Forms.Button();
-            this.lbShowSF = new System.Windows.Forms.Label();
-            this.lbShowS3F17 = new System.Windows.Forms.Label();
+            this.btnSetS16F9 = new System.Windows.Forms.Button();
             this.pnLeftFrame.SuspendLayout();
             this.tabControl1.SuspendLayout();
             this.pageGeneral.SuspendLayout();
@@ -241,7 +242,7 @@
             this.btnS1F1.Name = "btnS1F1";
             this.btnS1F1.Size = new System.Drawing.Size(95, 43);
             this.btnS1F1.TabIndex = 4;
-            this.btnS1F1.Text = "F1S1";
+            this.btnS1F1.Text = "S1F1";
             this.btnS1F1.UseVisualStyleBackColor = true;
             this.btnS1F1.Click += new System.EventHandler(this.btnS1F1_Click);
             // 
@@ -316,7 +317,7 @@
             this.btnS1F13.Name = "btnS1F13";
             this.btnS1F13.Size = new System.Drawing.Size(95, 43);
             this.btnS1F13.TabIndex = 15;
-            this.btnS1F13.Text = "F1S13";
+            this.btnS1F13.Text = "S1F13";
             this.btnS1F13.UseVisualStyleBackColor = true;
             this.btnS1F13.Click += new System.EventHandler(this.btnS1F3_Click);
             // 
@@ -446,6 +447,7 @@
             // 
             // gbCommand
             // 
+            this.gbCommand.Controls.Add(this.btnSetS16F9);
             this.gbCommand.Controls.Add(this.btnSetS1F13);
             this.gbCommand.Controls.Add(this.btnS2F17);
             this.gbCommand.Controls.Add(this.btnS1F1);
@@ -457,13 +459,23 @@
             this.gbCommand.TabStop = false;
             this.gbCommand.Text = "Command";
             // 
+            // btnSetS1F13
+            // 
+            this.btnSetS1F13.Location = new System.Drawing.Point(303, 22);
+            this.btnSetS1F13.Name = "btnSetS1F13";
+            this.btnSetS1F13.Size = new System.Drawing.Size(95, 43);
+            this.btnSetS1F13.TabIndex = 17;
+            this.btnSetS1F13.Text = "S1F13";
+            this.btnSetS1F13.UseVisualStyleBackColor = true;
+            this.btnSetS1F13.Click += new System.EventHandler(this.btnSetS1F13_Click);
+            // 
             // btnS2F17
             // 
             this.btnS2F17.Location = new System.Drawing.Point(17, 76);
             this.btnS2F17.Name = "btnS2F17";
             this.btnS2F17.Size = new System.Drawing.Size(95, 43);
             this.btnS2F17.TabIndex = 16;
-            this.btnS2F17.Text = "F2S17";
+            this.btnS2F17.Text = "S2F17";
             this.btnS2F17.UseVisualStyleBackColor = true;
             this.btnS2F17.Click += new System.EventHandler(this.btnS2F17_Click);
             // 
@@ -975,6 +987,15 @@
             this.pageAccessMode.Text = "Access Mode & Reservation";
             this.pageAccessMode.UseVisualStyleBackColor = true;
             // 
+            // lbShowSF
+            // 
+            this.lbShowSF.AutoSize = true;
+            this.lbShowSF.Location = new System.Drawing.Point(723, 404);
+            this.lbShowSF.Name = "lbShowSF";
+            this.lbShowSF.Size = new System.Drawing.Size(42, 16);
+            this.lbShowSF.TabIndex = 7;
+            this.lbShowSF.Text = "S3F25";
+            // 
             // btnReserved
             // 
             this.btnReserved.Location = new System.Drawing.Point(328, 272);
@@ -1212,6 +1233,15 @@
             this.pageCarrierRequest.TabIndex = 4;
             this.pageCarrierRequest.Text = "Carrier Action Request";
             this.pageCarrierRequest.UseVisualStyleBackColor = true;
+            // 
+            // lbShowS3F17
+            // 
+            this.lbShowS3F17.AutoSize = true;
+            this.lbShowS3F17.Location = new System.Drawing.Point(723, 106);
+            this.lbShowS3F17.Name = "lbShowS3F17";
+            this.lbShowS3F17.Size = new System.Drawing.Size(42, 16);
+            this.lbShowS3F17.TabIndex = 8;
+            this.lbShowS3F17.Text = "S3F17";
             // 
             // btnAddCarrierID
             // 
@@ -1547,33 +1577,15 @@
             // 
             this.timeUIUpdate.Tick += new System.EventHandler(this.timeUIUpdate_Tick);
             // 
-            // btnSetS1F13
+            // btnSetS16F9
             // 
-            this.btnSetS1F13.Location = new System.Drawing.Point(303, 22);
-            this.btnSetS1F13.Name = "btnSetS1F13";
-            this.btnSetS1F13.Size = new System.Drawing.Size(95, 43);
-            this.btnSetS1F13.TabIndex = 17;
-            this.btnSetS1F13.Text = "F1S13";
-            this.btnSetS1F13.UseVisualStyleBackColor = true;
-            this.btnSetS1F13.Click += new System.EventHandler(this.btnSetS1F13_Click);
-            // 
-            // lbShowSF
-            // 
-            this.lbShowSF.AutoSize = true;
-            this.lbShowSF.Location = new System.Drawing.Point(723, 404);
-            this.lbShowSF.Name = "lbShowSF";
-            this.lbShowSF.Size = new System.Drawing.Size(42, 16);
-            this.lbShowSF.TabIndex = 7;
-            this.lbShowSF.Text = "S3F25";
-            // 
-            // lbShowS3F17
-            // 
-            this.lbShowS3F17.AutoSize = true;
-            this.lbShowS3F17.Location = new System.Drawing.Point(723, 106);
-            this.lbShowS3F17.Name = "lbShowS3F17";
-            this.lbShowS3F17.Size = new System.Drawing.Size(42, 16);
-            this.lbShowS3F17.TabIndex = 8;
-            this.lbShowS3F17.Text = "S3F17";
+            this.btnSetS16F9.Location = new System.Drawing.Point(670, 22);
+            this.btnSetS16F9.Name = "btnSetS16F9";
+            this.btnSetS16F9.Size = new System.Drawing.Size(95, 43);
+            this.btnSetS16F9.TabIndex = 18;
+            this.btnSetS16F9.Text = "S16F9";
+            this.btnSetS16F9.UseVisualStyleBackColor = true;
+            this.btnSetS16F9.Click += new System.EventHandler(this.btnSetS16F9_Click);
             // 
             // Form1
             // 
@@ -1759,6 +1771,7 @@
         private System.Windows.Forms.Button btnSetS1F13;
         private System.Windows.Forms.Label lbShowSF;
         private System.Windows.Forms.Label lbShowS3F17;
+        private System.Windows.Forms.Button btnSetS16F9;
     }
 }
 

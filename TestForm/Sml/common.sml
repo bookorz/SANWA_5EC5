@@ -456,3 +456,112 @@ Terminal Display, Single (VTN):'S10F3' W
 Terminal Display, Single Acknowledge (VTA):'S10F4' 
 <A[1] 'ACKC10'>
 .
+ABT_S10:'S16F0' 
+.
+Process Job Command Request (PRJCMDR):'S16F5' W
+<L[4]   
+	<U4[1] 'DATAID'>   
+	<A[1] 'PRJOBID'>   
+	<A[1] 'PRCMDNAME'>   
+	<L[0]        
+	>
+>
+.
+Process Job Command Acknowledge (PRJCMDA):'S16F6'
+<L[2]
+	<A[1] 'PRJOBID'>
+	<L[2]
+		<B[1] 'ACKA'>
+		<L[n]
+			<L[2]
+				<A[1] 'ERRCODE'>
+				<A[1] 'ERRTEXT'>
+			>
+		>
+	>
+>
+.
+PRJobCreateEnh:'S16F11' W
+<L[7]
+	<U4[1]'DATAID'>
+	<A[1]'PRJOBID'>
+	<B[1]'MF'>
+	<L[n]
+		<L[2]
+			<A[1] 'CARRIERID'>
+			<L[n]
+				<U1[0] 'SLOTID'>
+			>
+		>
+	>
+	<L[3]
+		<U1[1] 'PRRECIPEMETHOD'>
+		<A[1] 'RCPSPEC'>
+		<L[n]
+			<L[2]
+				<A[1] 'RCPPARNM'>
+				<A[1] 'RCPPARVAL'>
+			>
+		>
+	>
+	<U1[1] 'PRPROCESSSTART'>
+	<L[0] 'PRPAUSEEVENT'>
+>
+.
+PRJobCreateEnh Acknowledge:'S16F12'
+<L[2]
+	<A[0] 'PRJOBID'>
+	<L[2]
+		<Boolean[0] 'ACKA'>
+		<L[n]
+			<A[1] 'ERRCODE'>
+			<A[1] 'ERRTEXT'>
+		>
+	>
+>
+.
+PRJobDequeue:'S16F17' W
+<L[n]
+	<A[1] 'PRJOBID'>
+>
+.
+PRJobDequeue Acknowledge:'S16F18'
+<L[2]
+	<L[n]
+		<A[1] 'PRJOBID'>
+	>
+	<L[2]
+		<Boolean[0] 'ACKA'>
+		<L[n]
+			<A[1] 'ERRCODE'>
+			<A[1] 'ERRTEXT'>
+		>
+	>
+>
+.
+Process Job Event Notify (PRJE):'S16F9' W
+<L[4]
+	<U1[0] 'PREVENTID'>
+	<A[0] 'TIMESTAMP'>
+	<A[0] 'PRJOBID'>
+	<L[n]
+		<L[2]
+			<A[1] 'VID'>
+			<A[1] 'V'>
+		>
+	>
+>
+.
+Process Job Event Confirm (PRJEC):'S16F10'
+.
+PRGetAllJobs:'S16F19' W
+.
+PRGetAllJobs Send:'S16F20' 
+<L[n]  
+	<L[2]        
+		<U1[1]'PRJOBID'>        
+		<U1[1]'PRSTATE'>
+	>
+>
+.
+

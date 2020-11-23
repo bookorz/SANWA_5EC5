@@ -19,10 +19,6 @@ namespace SanwaSecsDll
     {
         public async Task SendS6F1Async(SanwaTDS sanwaTDS)
         {
-            //_logger.Info(sanwaTDS._smpln.ToString());
-            //SecsMessage secsMessage = _secsMessages[6, 1].FirstOrDefault();
-            //if (secsMessage != null)
-            //_strFunList.TryGetValue("S6F1", out SanwaStrFunSetting strfunObj);
             _smlManager._messageList.TryGetValue("S6F1", out SanwaSML sanwaSML);
 
             if (sanwaSML != null)
