@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Rorze.SECS.Driver.Properties;
 using log4net;
+using System.Diagnostics;
 
 //namespace Secs4Net
 namespace Rorze.SECS.Driver
@@ -213,7 +214,7 @@ namespace Rorze.SECS.Driver
                         {
                             if (IsDisposed)
                                 return;
-
+                            Trace.WriteLine(ex.Message + "\n" + ex.StackTrace);
                             _logger.Error(ex.Message);
                             _logger.Info($"Start T5 Timer: {T5 / 1000} sec.");
                             await Task.Delay(T5);
@@ -254,7 +255,7 @@ namespace Rorze.SECS.Driver
                         {
                             if (IsDisposed)
                                 return;
-
+                            Trace.WriteLine(ex.Message + "\n" + ex.StackTrace);
                             _logger.Error(ex.Message);
                             await Task.Delay(2000).ConfigureAwait(false);
                         }
@@ -331,6 +332,7 @@ namespace Rorze.SECS.Driver
                     }
                     catch (Exception ex)
                     {
+                        Trace.WriteLine(ex.Message+"\n"+ex.StackTrace);
                         _logger.Error("Unexpected exception", ex);
                         CommunicationStateChanging(ConnectionState.Retry);
                     }
@@ -339,6 +341,7 @@ namespace Rorze.SECS.Driver
 
             void HandleControlMessage(MessageHeader header)
             {
+                //Trace.WriteLine($"HandleControlMessage");
                 var systembyte = header.SystemBytes;
                 if ((byte)header.MessageType % 2 == 0)
                 {
@@ -391,7 +394,7 @@ namespace Rorze.SECS.Driver
             void HandleDataMessage(MessageHeader header, SecsMessage msg)
             {
                 var systembyte = header.SystemBytes;
-
+                //Trace.WriteLine($"HandleDataMessage");
                 if (header.DeviceId != DeviceId && msg.S != 9 && msg.F != 1)
                 {
                     //_logger.Info(msg, systembyte);
@@ -679,7 +682,7 @@ namespace Rorze.SECS.Driver
                 }
 
                 SetResult(replyMsg);
-            }
+            } 
         }
     }
 }
